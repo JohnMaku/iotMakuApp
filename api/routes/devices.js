@@ -11,14 +11,29 @@
 //         "userid": "abcd"
 //     }
 // }
+// prueba con post en postman  se usa body la opcion  raw formato json y se escribio esto en body
+// {
+//     "dId": "qwerty",
+//     "userId": "HELLO FRON postman"
+// }
+
 
  router.get("/test", (req, res) => {
-     console.log(req.query.dId)
+     console.log(req.query)
      var toReturn = {
          status: "success",
-         data: req.query
+         data: "HELLO FRON GET"
      }
     res.json(toReturn );
+});
+
+router.post("/test", (req, res) => {
+    console.log(req.body)
+    var toReturn = {
+        status: "success",
+        data: "HELLO FRON POST"
+    }
+   res.json(toReturn );
 });
 
 
