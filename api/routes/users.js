@@ -11,7 +11,7 @@ import User from "../models/user.js";
 //POST -> req.body
 //GET -> req.query
 
-//AUTH
+//LOGIN
 router.post("/register", async (req, res) => {
   try {
 
@@ -51,6 +51,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
+//REGISTER
 router.post("/login", async (req, res) => {
   // en un login resibimos el email y password
   const email = req.body.email;
@@ -102,19 +103,19 @@ router.post("/login", async (req, res) => {
 
 });
 
-
-router.get("/new-user", async (req, res) => {
-  try {
-    const user = await User.create({
-      name: "Benjamin",
-      email: "a@b.com",
-      password: "121212"
-    });
-    res.json({ status: "success" });
-  } catch (error) {
-    console.log(error);
-    res.json({ status: "fail" });
-  }
-});
+//EJEMPLO DE REGISTRARSE CON EL METODO GET--
+// router.get("/new-user", async (req, res) => {
+//   try {
+//     const user = await User.create({
+//       name: "Benjamin",
+//       email: "a@b.com",
+//       password: "121212"
+//     });
+//     res.json({ status: "success" });
+//   } catch (error) {
+//     console.log(error);
+//     res.json({ status: "fail" });
+//   }
+// });
 
 module.exports = router; //se exporta el ruteador para que lo tenga en cuenta el index

@@ -1,40 +1,41 @@
  const express = require("express");
  const router = express.Router();
 
-//  PRUEBA CON POSTMAN
-//  Con el metodo GET y url "http://localhost:3001/api/test?dId=1234&userid=abcd"
-// en postman debemos ver:
-// {
-//     "status": "success",
-//     "data": {
-//         "dId": "1234",
-//         "userid": "abcd"
-//     }
-// }
-// prueba con post en postman  se usa body la opcion  raw formato json y se escribio esto en body
-// {
-//     "dId": "qwerty",
-//     "userId": "HELLO FRON postman"
-// }
+ const { checkAuth } = require('../middlewares/authentication.js')
+
+//con get traemos informacion del dispositivo
+router.get("/device", checkAuth ,(req, res) => {
+    //aqui vemos en consola el contenido de userData luego de desencriptarlo en 
+    //checkAuth en authentication.js
+    console.log(req.userData); 
+  
+    req.userData.userId
+  
+    const toSend = {
+      status: "success",
+      data: "[2 , 3 , 4 , 5 ]"
+    };
+  
+    return res.status(200).json(toSend);
+  
+})
+
+//con post creamos un dispositivo
+router.post("/device", (req, res) => {
+    
+})
+
+//con borramos un dispositivo
+router.delete("/device", (req, res) => {
+    
+})
+
+//con put actualizamos un dispositivo
+router.put("/device", (req, res) => {
+    
+})
 
 
- router.get("/test", (req, res) => {
-     console.log(req.query)
-     var toReturn = {
-         status: "success",
-         data: "HELLO FRON GET"
-     }
-    res.json(toReturn );
-});
-
-router.post("/test", (req, res) => {
-    console.log(req.body)
-    var toReturn = {
-        status: "success",
-        data: "HELLO FRON POST"
-    }
-   res.json(toReturn );
-});
 
 
 module.exports = router;//se exporta el ruteador para que lo tenga en cuenta el index
