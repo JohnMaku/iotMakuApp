@@ -64,69 +64,62 @@
 </template>
 <script>
 export default {
-  middleware: 'notAuthenticated',
+  middleware: "notAuthenticated",//con este verificamos que si ya esta autenticado lo enviamos al dashboard
   layout: "auth",
   data() {
     return {
       user: {
         name: "",
         email: "",
-        password: ""
-      }
+        password: "",
+      },
     };
   },
   methods: {
     register() {
-
       this.$axios
         .post("/register", this.user)
-        .then(res => {
+        .then((res) => {
           //success! - Usuario creado.
           if (res.data.status == "success") {
+            //llamamos la notificacion que es global e indicamos lo que queremos notificar
             this.$notify({
-              type: "success",
-              icon: "tim-icons icon-check-2",
-              message: "Success! Now you can login..."
+              type: "success", //el color de la notificacion (verde)
+              icon: "tim-icons icon-check-2", //icono de check ok
+              message: "Success! Now you can login...", //mensaje de notificacion
             });
-
+            //si estomos aqui es porque crear el usario funciono bien
+            //entonces limpiamos los datos para que no queden disponibles
             this.user.name = "";
             this.user.password = "";
             this.user.email = "";
 
             return;
           }
-
         })
-        .catch(e => {
+        .catch((e) => {
           console.log(e.response.data);
 
           if (e.response.data.error.errors.email.kind == "unique") {
             this.$notify({
               type: "danger",
               icon: "tim-icons icon-alert-circle-exc",
-              message: "User already exists :("
+              message: "User already exists :(",
             });
 
             return;
-
           } else {
-
             this.$notify({
               type: "danger",
               icon: "tim-icons icon-alert-circle-exc",
-              message: "Error creating user..."
+              message: "Error creating user...",
             });
 
             return;
           }
-
-
-
         });
-
-
-    }
-  }
+    },
+  },
 };
 </script>
 <style>

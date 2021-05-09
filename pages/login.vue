@@ -4,7 +4,7 @@
       <card class="card-login card-white">
         <template slot="header">
           <img src="img//card-primary.png" alt="" />
-          <h1 class="card-title">IoT GL   </h1>
+          <h1 class="card-title">IoT GL</h1>
         </template>
 
         <div>
@@ -57,61 +57,65 @@
 <script>
 const Cookie = process.client ? require("js-cookie") : undefined;
 export default {
-  middleware: 'notAuthenticated',
+  middleware: "notAuthenticated", //con este verificamos que si ya esta autenticado lo enviamos al dashboard
   name: "login-page",
   layout: "auth",
   data() {
     return {
       user: {
         email: "",
-        password: ""
-      }
+        password: "",
+      },
     };
   },
-  mounted() {
-
-  },
+  mounted() {},
   methods: {
     login() {
       this.$axios
         .post("/login", this.user)
-        .then(res => {
-
-          //success! - Usuario creado.
+        .then((res) => {
+          //success! - Usuario logeado .
           if (res.data.status == "success") {
-
             this.$notify({
               type: "success",
               icon: "tim-icons icon-check-2",
-              message: "Success! Welcome " + res.data.userData.name
+              message: "Success! Welcome " + res.data.userData.name,
             });
 
-            console.log(res.data)
+            console.log(res.data);
 
             const auth = {
               token: res.data.token,
-              userData: res.data.userData
-            }
+              userData: res.data.userData,
+            };
+            //Para tener token y los datos de usuario disponibles en cualquier lugar
+            //los enviamos a un state(parecido a una variable global) en la carpeta
+            //store y archivo index.
+            //Para lograrlo, el metodo($store.commit) pide el nombre de la mutacion('setAuth')
+            // y el nuevo valor(auth)
+            this.$store.commit("setAuth", auth);
 
-            //token to de store - token a la tienda
-            this.$store.commit('setAuth', auth);
-
-            //set auth object in localStorage - Grabamos el token en localStorage
-            localStorage.setItem('auth', JSON.stringify(auth));
-
-            $nuxt.$router.push('/dashboard');
+            //ahora grabamos los datos de autenticacion(auth) en el disco duro para que mientras
+            // el token este activo el usuario pueda entrar directamente a nuestra plataforma sin
+            // pasar nuevamente por login. le pasamos el nombre de la etiqueta('auth') y los datos
+            // que seran almacenados(auth), pero estos datos deben ser de tipo string, para locual
+            //los combertimos con JSON.stringify
+            localStorage.setItem("auth", JSON.stringify(auth));
+            //como el usuario se logeo correctamente usamos la instancia de nuxt, donde esta el metodo
+            //push para redireccionar el usuaria a nuestra plataforma(/dashboard)
+            $nuxt.$router.push("/dashboard");
 
             return;
           }
         })
-        .catch(e => {
+        .catch((e) => {
           console.log(e.response.data);
 
           if (e.response.data.error.errors.email.kind == "unique") {
             this.$notify({
               type: "danger",
               icon: "tim-icons icon-alert-circle-exc",
-              message: "User already exists :("
+              message: "User already exists :(",
             });
 
             return;
@@ -119,14 +123,14 @@ export default {
             this.$notify({
               type: "danger",
               icon: "tim-icons icon-alert-circle-exc",
-              message: "Error creating user..."
+              message: "Error creating user...",
             });
 
             return;
           }
         });
-    }
-  }
+    },
+  },
 };
 </script>
 
