@@ -78,7 +78,7 @@
           <h4 class="card-title">Device</h4>
         </div>
         <!-- con los dos puntos le decimos a la tabla que la info la debe busca abajo, no la pasamos directo. -->
-        <el-table :data="devices">
+        <el-table :data="$store.state.devices">
           <el-table-column label="#" min-width="50" align="center">
             <div slot-scope="{ row, $index }">
               {{ $index + 1 }}
@@ -95,14 +95,23 @@
             <!-- row indica la fila e index indica el nuro de recorrido del arreglo -->
             <div slot-scope="{ row, $index }">
               <!-- {{row.saverRule}}  visualiza el estado de la variable en la pagina para debug. -->
-              <el-tooltip content="Saver Status Indicator" style="margin-right:10px">
-                <i class="fas fa-database " :class="{'text-success' : row.saverRule, 'text-dark' : !row.saverRule}"></i>
+              <el-tooltip
+                content="Saver Status Indicator"
+                style="margin-right: 10px"
+              >
+                <i
+                  class="fas fa-database"
+                  :class="{
+                    'text-success': row.saverRule,
+                    'text-dark': !row.saverRule,
+                  }"
+                ></i>
               </el-tooltip>
               <!-- con esto visualizo en la pantalla en la celda del boton, toda la info de la fila.
               {{row.name}}  -->
               <!-- el-tooltip es el contenido de una celda con forma de swich para habilitar salvar datos en una
               base de nuestro dispositivo -->
-              <el-tooltip class="Database Saver"> 
+              <el-tooltip class="Database Saver">
                 <base-switch
                   @click="updateSaverRuleStatus($index)"
                   :value="row.saverRule"
@@ -128,7 +137,7 @@
                   <i class="tim-icons icon-simple-remove"></i>
                 </base-button>
               </el-tooltip>
-            </div> 
+            </div>
             <el-tooltip
               content="Delete"
               effect="light"
@@ -147,7 +156,7 @@
     <!-- <pre>  la etiqueta pre organiza lo que se va a imprimir en pantalla 
       {{devices}}
     </pre> -->
-    <Json :value="devices"></Json>
+    <Json :value="$store.state.devices"></Json>
   </div>
 </template>
 
@@ -157,6 +166,7 @@ import { Table, TableColumn } from "element-ui";
 import { Select, Option } from "element-ui";
 import JsonColor from "../components/Json.vue";
 export default {
+  middleware: "authenticated", //con este cargamos el token que tenemos en el dd
   // esto es como una instacia local de los compo, sino no se pueden usar.
   components: {
     [Table.name]: Table,
@@ -164,41 +174,24 @@ export default {
     [Option.name]: Option,
     [Select.name]: Select,
   },
-  // localizacion de las variables, como no hemos configurado la API simularemos su respuesta.
+  // localizacion de las variables.
   data() {
-    return {
-      //devices es una variable de tipo array de objetos, llena amano para la prueba.
-      devices: [
-        {
-          name: "Home",
-          dId: "8888",
-          templateName: "Power Sensor",
-          templateId: "21313131313231",
-          saverRule: false,
-        },
-        {
-          name: "Office",
-          dId: "9999",
-          templateName: "Power Term",
-          templateId: "15645245615414",
-          saverRule: true,
-        },
-        {
-          name: "Farm",
-          dId: "7777",
-          templateName: "Power dog",
-          templateId: "54654156156565",
-          saverRule: false,
-        },
-      ],
-    };
+    return {};
+  },
+
+  mounted() {
+    // una vez se carge la pagina llamamos la funcion getDevices para que el usuario tenga la lista
+    // de sus dispositivos.
+    //la funcion getDevices() esta en store/index en la accion getDevices
+    this.$store.dispatch("getDevices");
   },
   // declaracion de metodos o funciones.
   methods: {
     deleteDevice(device) {
       alert("DELETING " + device.name);
-    },
+    }, 
     updateSaverRuleStatus(index) {
+      console.log(index);
       this.devices[index].saverRule = !this.devices[index].saverRule;
     },
   },
