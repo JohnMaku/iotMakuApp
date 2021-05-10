@@ -15,7 +15,7 @@
               v-model="widgetType"
               class="select-success"
               placeholder="Select Widget"
-              style="width: 100%;"
+              style="width: 100%"
             >
               <el-option
                 class="text-dark"
@@ -88,7 +88,7 @@
                 v-model="ncConfig.class"
                 class="select-success"
                 placeholder="Select Class"
-                style="width: 100%;"
+                style="width: 100%"
               >
                 <el-option
                   class="text-success"
@@ -118,7 +118,7 @@
                 v-model="ncConfig.column"
                 class="select-success"
                 placeholder="Select Column Width"
-                style="width: 100%;"
+                style="width: 100%"
               >
                 <el-option
                   class="text-dark"
@@ -196,7 +196,7 @@
                 v-model="iotSwitchConfig.class"
                 class="select-success"
                 placeholder="Select Class"
-                style="width: 100%;"
+                style="width: 100%"
               >
                 <el-option
                   class="text-success"
@@ -226,7 +226,7 @@
                 v-model="iotSwitchConfig.column"
                 class="select-success"
                 placeholder="Select Column Width"
-                style="width: 100%;"
+                style="width: 100%"
               >
                 <el-option
                   class="text-dark"
@@ -318,7 +318,7 @@
                 v-model="configButton.class"
                 class="select-success"
                 placeholder="Select Class"
-                style="width: 100%;"
+                style="width: 100%"
               >
                 <el-option
                   class="text-success"
@@ -348,7 +348,7 @@
                 v-model="configButton.column"
                 class="select-success"
                 placeholder="Select Column Width"
-                style="width: 100%;"
+                style="width: 100%"
               >
                 <el-option
                   class="text-dark"
@@ -426,7 +426,7 @@
                 v-model="configIndicator.class"
                 class="select-success"
                 placeholder="Select Class"
-                style="width: 100%;"
+                style="width: 100%"
               >
                 <el-option
                   class="text-success"
@@ -456,7 +456,7 @@
                 v-model="configIndicator.column"
                 class="select-success"
                 placeholder="Select Column Width"
-                style="width: 100%;"
+                style="width: 100%"
               >
                 <el-option
                   class="text-dark"
@@ -554,12 +554,16 @@
 
     <!-- DASHBOARD PREVIEW   -->
     <div class="row">
-      <div v-for="(widget, index) in widgets" :key="index" :class="[widget.column]">
+      <div
+        v-for="(widget, index) in widgets"
+        :key="index"
+        :class="[widget.column]"
+      >
         <i
           aria-hidden="true"
           class="fa fa-trash text-warning pull-right"
           @click="deleteWidget(index)"
-          style="margin-bottom: 10px;"
+          style="margin-bottom: 10px"
         ></i>
 
         <Rtnumberchart
@@ -585,7 +589,7 @@
     </div>
 
     <!-- SAVE TEMPLATE-->
-    <div class="row">
+    <div class="row" >
       <card>
         <div slot="header">
           <h4 class="card-title">Save Template</h4>
@@ -619,6 +623,7 @@
               class="mb-3 pull-right"
               size="lg"
               @click="saveTemplate()"
+              :disabled="widgets.length == 0"
             >
               Save Template
             </base-button>
@@ -672,7 +677,7 @@
                     size="sm"
                     class="btn-link"
                   >
-                    <i class="tim-icons icon-simple-remove "></i>
+                    <i class="tim-icons icon-simple-remove"></i>
                   </base-button>
                 </el-tooltip>
               </div>
@@ -684,6 +689,7 @@
 
     <!-- JSONS -->
     <Json :value="widgets"></Json>
+    <Json :value="templates"></Json>
   </div>
 </template>
 
@@ -692,11 +698,12 @@ import { Table, TableColumn } from "element-ui";
 import { Select, Option } from "element-ui";
 
 export default {
+  middleware: "authenticated",
   components: {
     [Table.name]: Table,
     [TableColumn.name]: TableColumn,
     [Option.name]: Option,
-    [Select.name]: Select
+    [Select.name]: Select,
   },
   data() {
     return {
@@ -710,7 +717,7 @@ export default {
         userId: "sampleuserid",
         selectedDevice: {
           name: "Home",
-          dId: "8888"
+          dId: "8888",
         },
         variableFullName: "temperature",
         variable: "varname",
@@ -721,28 +728,28 @@ export default {
         widget: "numberchart",
         icon: "fa-bath",
         chartTimeAgo: 1566,
-        demo: true
+        demo: true,
       },
 
       iotSwitchConfig: {
         userId: "userid",
         selectedDevice: {
           name: "Home",
-          dId: "8888"
+          dId: "8888",
         },
         variableFullName: "Luz",
         variable: "varname",
         class: "danger",
         widget: "switch",
         icon: "fa-bath",
-        column: "col-6"
+        column: "col-6",
       },
 
       configButton: {
         userId: "userid",
         selectedDevice: {
           name: "Home",
-          dId: "8888"
+          dId: "8888",
         },
         variableFullName: "temperature",
         text: "send",
@@ -750,24 +757,22 @@ export default {
         variable: "varname",
         widget: "button",
         icon: "fa-bath",
-        column: "col-6"
+        column: "col-6",
       },
 
-      configIndicator: {
+      iotconfigIndicator: {
         userId: "userid",
         selectedDevice: {
           name: "Home",
-          dId: "8888"
+          dId: "8888",
         },
         variableFullName: "temperature",
         variable: "varname",
         class: "success",
         widget: "indicator",
         icon: "fa-bath",
-        column: "col-6"
+        column: "col-6",
       },
-
-      value: false,
 
       configButton: {
         userId: "userid",
@@ -776,7 +781,7 @@ export default {
           dId: "8888",
           templateName: "Power Sensor",
           templateId: "984237562348756ldksjfh",
-          saverRule: false
+          saverRule: false,
         },
         variableFullName: "Pump",
         variable: "var1",
@@ -784,7 +789,7 @@ export default {
         column: "col-6",
         widget: "indicator",
         class: "danger",
-        message: "{'fanstatus': 'stop'}"
+        message: "{'fanstatus': 'stop'}",
       },
 
       configIndicator: {
@@ -794,20 +799,119 @@ export default {
           dId: "8888",
           templateName: "Power Sensor",
           templateId: "984237562348756ldksjfh",
-          saverRule: false
+          saverRule: false,
         },
         variableFullName: "Pump",
         variable: "var1",
         icon: "fa-sun",
         column: "col-6",
         widget: "indicator",
-        class: "success"
-      }
+        class: "success",
+      },
     };
   },
 
-  methods: {    
-    addNewWidget() {       
+  mounted() {
+    this.getTemplates();
+  },
+
+  methods: {
+    //Get Templates
+    async getTemplates() {
+      const axiosHeaders = {
+        headers: {
+          token: this.$store.state.auth.token,
+        },
+      };
+      try {
+        const res = await this.$axios.get("/template", axiosHeaders);
+        console.log(res.data);
+        if (res.data.status == "success") {
+          this.templates = res.data.data;
+        }
+      } catch (error) {
+        this.$notify({
+          type: "danger",
+          icon: "tim-icons icon-alert-circle-exc",
+          message: "Error getting templates...",
+        });
+        console.log(error);
+        return;
+      }
+    },
+
+    //Save Template
+    async saveTemplate() {
+      const axiosHeaders = {
+        headers: {
+          token: this.$store.state.auth.token,
+        },
+      };
+      console.log(axiosHeaders);
+      const toSend = {
+        template: {
+          name: this.templateName,
+          description: this.templateDescription,
+          widgets: this.widgets,
+        },
+      };
+
+      try {
+        const res = await this.$axios.post("/template", toSend, axiosHeaders);
+        if (res.data.status == "success") {
+          this.$notify({
+            type: "success",
+            icon: "tim-icons icon-check-2",
+            message: "Template created!",
+          });
+          this.getTemplates();
+        }
+      } catch (error) {
+        this.$notify({
+          type: "danger",
+          icon: "tim-icons icon-alert-circle-exc",
+          message: "Error creating template...",
+        });
+        console.log(error);
+        return;
+      }
+    },
+
+    //Delete Template
+    async deleteTemplate(template) {
+      
+      const axiosHeaders = {
+        headers: {
+          token: this.$store.state.auth.token
+        },
+        params:{
+          templateId:template._id
+        }
+      };
+      console.log(axiosHeaders);
+      try {
+        const res = await this.$axios.delete("/template", axiosHeaders);
+        if (res.data.status == "success") {
+          this.$notify({
+            type: "success",
+            icon: "tim-icons icon-check-2",
+            message: template.name + " was deleted!"
+          });
+          
+          this.getTemplates();
+        }
+      } catch (error) {
+        this.$notify({
+          type: "danger",
+          icon: "tim-icons icon-alert-circle-exc",
+          message: "Error getting templates..."
+        });
+        console.log(error);
+        return;
+      }
+    },
+
+    addNewWidget() {
       if (this.widgetType == "numberchart") {
         //La funcion makeid genera un codigo aleatorio para dar seguridad al sistema
         this.ncConfig.variable = this.makeid(10);
@@ -829,7 +933,7 @@ export default {
     },
     // Borra el widget nodeseado en el preview la funcion splice borra y reagrupa.
     deleteWidget(index) {
-      this.widgets.splice(index, 1)
+      this.widgets.splice(index, 1);
     },
     // Con esta funcion generamos un codigo aleatorio para dar seguridad.
     makeid(length) {
@@ -843,8 +947,7 @@ export default {
         );
       }
       return result;
-    
-    }
-  }
+    },
+  },
 };
 </script>

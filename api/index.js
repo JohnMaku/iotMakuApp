@@ -18,9 +18,10 @@ app.use(
 );
 app.use(cors()); //Lepasamos las politicas de acceso a express
 
-//express routes
-app.use("/api", require("./routes/devices.js"));//todos los endpoint llevaran el prefijo api
+//express routes, todos los endpoint llevaran el prefijo api.
+app.use("/api", require("./routes/devices.js"));//
 app.use("/api", require("./routes/users.js"));//informacion de usuarios
+app.use("/api", require("./routes/templates.js"));
 // permite ordenar las rutas(anteriormente creadas) o endpoints en archivos separados.
 module.exports = app;
 

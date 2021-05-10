@@ -16,6 +16,7 @@
               label="Device Name"
               type="text"
               placeholder="Ex: Home, Office..."
+              v-model="newDevice.name"
             ></base-input>
           </div>
 
@@ -24,10 +25,11 @@
             <base-input
               label="Device Id"
               type="text"
-              placeholder="Ex: J-565-356"
+              placeholder="Ex: 7777-8888"
+              v-model="newDevice.dId"
             ></base-input>
           </div>
-
+ 
           <!-- Tercera columna-->
           <div class="col-4">
             <slot name="labele">
@@ -35,27 +37,20 @@
             </slot>
             <!-- lista desplegable para seleccionar -->
             <el-select
-              value="1"
+              v-model="selectedIndexTemplate"
               placeholder="Select Template"
               class="select-primary"
               style="width: 100%"
             >
+            <!-- el v-for que sigue recorre y visualiza todos los templates que tiene el usuario y los 
+              visualiza en el desplegable template. Los : en key, value y label indican que el valor es 
+              de una variable, sin los dos puntos se imprime el string-->
               <el-option
+                v-for="(template, index) in templates"
+                :key="template._id"
                 class="text-dark"
-                value="Template 1"
-                label="Template 1"
-              ></el-option>
-
-              <el-option
-                class="text-dark"
-                value="Template 2"
-                label="Template 2"
-              ></el-option>
-
-              <el-option
-                class="text-dark"
-                value="Template 3"
-                label="Template 3"
+                :value="index"
+                :label="template.name"
               ></el-option>
             </el-select>
           </div>
@@ -64,7 +59,13 @@
         <!-- creamos un boton para adicionar el dispositivo -->
         <div class="row pull-right">
           <div class="col-12">
-            <base-button type="primary" class="nb-3" size="lg">Add</base-button>
+            <base-button
+              @click="createNewDevice()"
+              type="primary"
+              class="mb-3"
+              size="lg"
+              >Add</base-button
+            >
           </div>
         </div>
       </card>
@@ -111,7 +112,7 @@
               {{row.name}}  -->
               <!-- el-tooltip es el contenido de una celda con forma de swich para habilitar salvar datos en una
               base de nuestro dispositivo -->
-              <el-tooltip class="Database Saver">
+              <el-tooltip content="Database Saver">
                 <base-switch
                   @click="updateSaverRuleStatus($index)"
                   :value="row.saverRule"
@@ -138,16 +139,6 @@
                 </base-button>
               </el-tooltip>
             </div>
-            <el-tooltip
-              content="Delete"
-              effect="light"
-              :open-delay="300"
-              placement="top"
-            >
-              <base-button type="danger" icon size="sm" class="btn_link">
-                <i class="tim-icons icon-simple-remove"></i>
-              </base-button>
-            </el-tooltip>
           </el-table-column>
         </el-table>
       </card>
@@ -156,7 +147,7 @@
     <!-- <pre>  la etiqueta pre organiza lo que se va a imprimir en pantalla 
       {{devices}}
     </pre> -->
-    <Json :value="$store.state.devices"></Json>
+   <Json :value="templates"></Json>   <!-- visualiza codigo al final de la pagina de devices -->
   </div>
 </template>
 
@@ -164,7 +155,7 @@
 //Se traen los componentes que se usan arriba
 import { Table, TableColumn } from "element-ui";
 import { Select, Option } from "element-ui";
-import JsonColor from "../components/Json.vue";
+
 export default {
   middleware: "authenticated", //con este cargamos el token que tenemos en el dd
   // esto es como una instacia local de los compo, sino no se pueden usar.
@@ -176,7 +167,16 @@ export default {
   },
   // localizacion de las variables.
   data() {
-    return {};
+    return {
+      templates: [],
+      selectedIndexTemplate: null,
+      newDevice: {
+        name: "",
+        dId: "",
+        templateId: "",
+        templateName: "",
+      },
+    };
   },
 
   mounted() {
@@ -184,12 +184,143 @@ export default {
     // de sus dispositivos.
     //la funcion getDevices() esta en store/index en la accion getDevices
     this.$store.dispatch("getDevices");
+    this.getTemplates();
   },
   // declaracion de metodos o funciones.
   methods: {
+    //new device
+    createNewDevice() {
+      if (this.newDevice.name == "") {
+        this.$notify({
+          type: "warning",
+          icon: "tim-icons icon-alert-circle-exc",
+          message: " Device Name is Empty :(",
+        });
+        return;
+      }
+      if (this.newDevice.dId == "") {
+        this.$notify({
+          type: "warning",
+          icon: "tim-icons icon-alert-circle-exc",
+          message: " Device ID is Empty :(",
+        });
+        return;
+      }
+      if (this.selectedIndexTemplate == null) {
+        this.$notify({
+          type: "warning",
+          icon: "tim-icons icon-alert-circle-exc",
+          message: " Tempalte must be selected",
+        });
+        return;
+      }
+
+      const axiosHeaders = {
+        headers: {
+          token: this.$store.state.auth.token,
+        },
+      };
+      //ESCRIBIMOS EL NOMBRE Y EL ID DEL TEMPLATE SELECCIONADO EN EL OBJETO newDevice
+      this.newDevice.templateId = this.templates[
+        this.selectedIndexTemplate
+      ]._id;
+      this.newDevice.templateName = this.templates[
+        this.selectedIndexTemplate
+      ].name;
+      const toSend = {
+        newDevice: this.newDevice,
+      };
+      this.$axios
+        .post("/device", toSend, axiosHeaders)
+        .then((res) => {
+          if (res.data.status == "success") {
+            this.$store.dispatch("getDevices");
+            this.newDevice.name = "";
+            this.newDevice.dId = "";
+            this.selectedIndexTemplate = null;
+            this.$notify({
+              type: "success",
+              icon: "tim-icons icon-check-2",
+              message: "Success! Device was added",
+            });
+            return;
+          }
+        })
+        .catch((e) => {
+          if (
+            e.response.data.status == "error" &&
+            e.response.data.error.errors.dId.kind == "unique"
+          ) {
+            this.$notify({
+              type: "warning",
+              icon: "tim-icons icon-alert-circle-exc",
+              message:
+                "The device is already registered in the system. Try another device",
+            });
+            return;
+          } else {
+            this.showNotify("danger", "Error");
+            return;
+          }
+        });
+    },
+    //Get Templates
+    async getTemplates() {
+      const axiosHeaders = {
+        headers: {
+          token: this.$store.state.auth.token,
+        },
+      };
+      try {
+        const res = await this.$axios.get("/template", axiosHeaders);
+        console.log(res.data);
+        if (res.data.status == "success") {
+          this.templates = res.data.data;
+        }
+      } catch (error) {
+        this.$notify({
+          type: "danger",
+          icon: "tim-icons icon-alert-circle-exc",
+          message: "Error getting templates...",
+        });
+        console.log(error);
+        return;
+      }
+    },
+
     deleteDevice(device) {
-      alert("DELETING " + device.name);
-    }, 
+      // alert("DELETING " + device.name);
+      const axiosHeader = {
+        headers: {
+          token: this.$store.state.auth.token,
+        },
+        params: {
+          dId: device.dId,
+        },
+      };
+
+      this.$axios
+        .delete("/device", axiosHeader)
+        .then((res) => {
+          if (res.data.status == "success") {
+            this.$notify({
+              type: "success",
+              icon: "tim-icons icon-check-2",
+              message: device.name + " deleted!",
+            });
+            this.$store.dispatch("getDevices");
+          }
+        })
+        .catch((e) => {
+          console.log(e);
+          this.$notify({
+            type: "danger",
+            icon: "tim-icons icon-alert-circle-exc",
+            message: " Error deleting " + device.name,
+          });
+        });
+    },
+
     updateSaverRuleStatus(index) {
       console.log(index);
       this.devices[index].saverRule = !this.devices[index].saverRule;
