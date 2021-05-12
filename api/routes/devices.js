@@ -1,7 +1,8 @@
  const express = require("express");
  const router = express.Router();
-
  const { checkAuth } = require('../middlewares/authentication.js')
+ const axios = require("axios");
+
 /*
  ___  ______________ _____ _      _____ 
 |  \/  |  _  |  _  \  ___| |    /  ___|
@@ -11,17 +12,26 @@
 \_|  |_/\___/|___/ \____/\_____/\____/  
 */
 import Device from '../models/device.js';
-
+import SaverRule from '../models/emqx_saver_rule.js';
 
 
 /* 
   ___  ______ _____ 
  / _ \ | ___ \_   _|
-/ /_\ \| |_/ / | |  
+/ /_\ \| |_/ / | |   
 |  _  ||  __/  | |  
 | | | || |    _| |_ 
 \_| |_/\_|    \___/ 
 */
+
+const auth = {
+  auth: {
+    username: "admin",
+    password: "emqxsecret"
+  }
+};
+
+
 //GET DEVICES con get traemos informacion del dispositivo
     /*en req tenemos el contenido de userData luego de desencriptarlo en 
     checkAuth en authentication.js*/
@@ -170,6 +180,10 @@ ______ _   _ _   _ _____ _____ _____ _____ _   _  _____
 \_|    \___/\_| \_/\____/ \_/  \___/ \___/\_| \_/\____/  
 */
 
+setTimeout(() => {
+  createSaverRule("121212","11111",false);
+}, 2000);
+
 async function selectDevice(userId, dId) {
   try {
     //en esta parte actualizaremos con false los dispositivos del usuario que me llega como parametro
@@ -193,5 +207,73 @@ async function selectDevice(userId, dId) {
   }
 } 
 
+/*
+ SAVER RULES FUNCTIONS
+*/
+//get saver rule
+
+//create saver rule
+async function createSaverRule(userId, dId, status) {
+try {
+  const url = "http://localhost:8085/api/v4/rules";
+
+  const topic = userId + "/" + dId + "/+/sdata";
+  //rawsql es la  consulta de la regla
+  const rawsql = "SELECT topic, payload FROM \"" + topic + "\" WHERE payload.save = 1";
+
+  var newRule = {
+    rawsql: rawsql,
+    actions: [  //estas son las acciones que aparecen en emqx/rule
+      {
+        name: "data_to_webserver",
+        params: {
+          $resource: global.saverResource.id,
+          payload_tmpl: '{"userId":"' +  userId + '","payload":${payload},"topic":"${topic}"}'
+        }
+      }
+    ],
+    description: "SAVER-RULE",
+    enabled: status
+  };
+
+  //save rule in emqx - grabamos la regla en emqx
+  const res = await axios.post(url, newRule, auth);
+
+  if(res.status === 200 && res.data.data){
+    console.log(res.data.data);
+    await SaverRule.create({
+      userId: userId,
+      dId: dId,
+      emqxRuleId: res.data.data.id,
+      status: status
+    });
+
+    return true;
+
+  }else{
+    return false;
+  }
+
+  } catch (error) {
+    console.log("Error creating saver rule")
+    console.log(error);
+    return false;
+  }
+
+
+}
+
+//update saver rule
+
+//delete saver rule
+
 
 module.exports = router;//se exporta el ruteador para que lo tenga en cuenta el index
+
+/*
+userId/dId/temperature -> 
+{
+  value: 21,
+  save: 1
+}
+*/
