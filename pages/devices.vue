@@ -29,7 +29,7 @@
               v-model="newDevice.dId"
             ></base-input>
           </div>
- 
+
           <!-- Tercera columna-->
           <div class="col-4">
             <slot name="labele">
@@ -42,7 +42,7 @@
               class="select-primary"
               style="width: 100%"
             >
-            <!-- el v-for que sigue recorre y visualiza todos los templates que tiene el usuario y los 
+              <!-- el v-for que sigue recorre y visualiza todos los templates que tiene el usuario y los 
               visualiza en el desplegable template. Los : en key, value y label indican que el valor es 
               de una variable, sin los dos puntos se imprime el string-->
               <el-option
@@ -103,8 +103,8 @@
                 <i
                   class="fas fa-database"
                   :class="{
-                    'text-success': row.saverRule,
-                    'text-dark': !row.saverRule,
+                    'text-success': row.saverRule.status,
+                    'text-dark': !row.saverRule.status,
                   }"
                 ></i>
               </el-tooltip>
@@ -114,8 +114,8 @@
               base de nuestro dispositivo -->
               <el-tooltip content="Database Saver">
                 <base-switch
-                  @click="updateSaverRuleStatus($index)"
-                  :value="row.saverRule"
+                  @click="updateSaverRuleStatus(row.saverRule)"
+                  :value="row.saverRule.status"
                   type="primary"
                   on-text="On"
                   off-text="Off"
@@ -147,7 +147,8 @@
     <!-- <pre>  la etiqueta pre organiza lo que se va a imprimir en pantalla 
       {{devices}}
     </pre> -->
-   <Json :value="templates"></Json>   <!-- visualiza codigo al final de la pagina de devices -->
+    <!-- <Json :value="templates"></Json>    visualiza codigo al final de la pagina de devices -->
+    <Json :value="$store.state.devices"></Json>
   </div>
 </template>
 
@@ -188,6 +189,71 @@ export default {
   },
   // declaracion de metodos o funciones.
   methods: {
+    updateSaverRuleStatus(rule) {
+      var ruleCopy = JSON.parse(JSON.stringify(rule));
+      ruleCopy.status = !ruleCopy.status;
+      const toSend = { rule: ruleCopy };
+      const axiosHeaders = {
+        headers: {
+          token: this.$store.state.auth.token,
+        },
+      };
+      this.$axios
+        .put("/saver-rule", toSend, axiosHeaders)
+        .then((res) => {
+
+          if (res.data.status == "success") {
+            this.$store.dispatch("getDevices"); 
+            this.$notify({
+              type: "success",
+              icon: "tim-icons icon-check-2",
+              message: " Device Saver Status Updated",
+            });
+          }
+          return;
+        })
+        .catch((e) => {
+          console.log(e);
+          this.$notify({
+            type: "danger",
+            icon: "tim-icons icon-alert-circle-exc",
+             message: " Error updating saver rule status"
+          });
+          return;
+        });
+    },
+    deleteDevice(device) {
+      const axiosHeaders = {
+        headers: {
+          token: this.$store.state.auth.accessToken,
+        },
+        params: {
+          dId: device.dId,
+        },
+      };
+      this.$axios
+        .delete("/device", axiosHeaders)
+        .then((res) => {
+          if (res.data.status == "success") {
+            this.$notify({
+              type: "success",
+              icon: "tim-icons icon-check-2",
+              message: device.name + " deleted!",
+            });
+          }
+          $nuxt.$emit("time-to-get-devices");
+          return;
+        })
+        .catch((e) => {
+          console.log(e);
+          this.$notify({
+            type: "danger",
+            icon: "tim-icons icon-alert-circle-exc",
+            message: " Error deleting " + device.name,
+          });
+          return;
+        });
+    },
     //new device
     createNewDevice() {
       if (this.newDevice.name == "") {
@@ -319,12 +385,7 @@ export default {
             message: " Error deleting " + device.name,
           });
         });
-    },
-
-    updateSaverRuleStatus(index) {
-      console.log(index);
-      this.devices[index].saverRule = !this.devices[index].saverRule;
-    },
+    },      
   },
 };
 </script>

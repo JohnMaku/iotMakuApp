@@ -38,9 +38,30 @@ const auth = {
 router.get("/device", checkAuth ,async(req, res) => {
   try {
     const userId = req.userData._id;
-    //si find() se usa con solo estos parentesis trae todos los dispositivos, con los
-    //otros se hace un filtro
-    const devices = await Device.find({ userId: userId });
+    //get devices
+    /**Expicacion de las dos lineas siguientes clase 157
+     * si find() se usa con solo estos parentesis trae todos los dispositivos, con los
+     * otros se hace un filtro
+     * Para modificar devices debe ser un objeto de JavaScrit, el que obtenemos es un 
+     * arreglo de mongoose(tipo de dato especial) y no se puede modificar, y para evitar 
+     * la reactividad no deseada y para poderlo  modificar debemos ejecutar la linea que lo pasa 
+     * a string y lo retorna como javascript, otraforma es:
+     * var newObj = Object.assign({}, oldObj) 
+     * donde pasamos el objeto original(oldObj) y nos retorna el nuevo desacoplado(newObj)
+     */    
+    var devices = await Device.find({ userId: userId });
+    devices = JSON.parse(JSON.stringify(devices));
+
+    //get saver rules
+    /**clase 157  en la siguiente parte de codigo recorremos dispositivo por dispositivo y
+     * saverRule por saverRule y cuando coincida regla con dispositivo le pasamos
+     * al dispositivo su respectiva regla
+     */
+    const saverRules = await getSaverRules(userId);
+
+    devices.forEach((device, index) => {
+      devices[index].saverRule = saverRules.filter(saverRule => saverRule.dId == device.dId)[0];
+    });
 
     const toSend = {
       status: "success",
@@ -63,16 +84,17 @@ router.get("/device", checkAuth ,async(req, res) => {
     
 })
 
-/* Formato del nuevo dispositivo
-{
-   "newDevice":{     
-      "dId":"121212",
-      "name":"HOME",
-      "templateName":"esp32 template",
-      "templateId":"ababab"
-   }
-}
-*/
+/**Formato del nuevo dispositivo
+ * {
+ *    "newDevice":{   
+ *     "dId":"121212",
+ *     "name":"HOME",
+ *     "templateName":"esp32 template",
+ *     "templateId":"ababab"
+ *  }
+ * }
+ */
+
 
 //NEW DEVICE con post creamos un dispositivo 
 router.post("/device", checkAuth , async (req, res) => {
@@ -95,7 +117,8 @@ router.post("/device", checkAuth , async (req, res) => {
     paso el nuevo dispositivo que tengo en newDevice.
    */
     const device = await Device.create(newDevice);
-
+    //Con el siguiente await garatizo que todo espera hasta que tengamos una respuesta de si se creo
+    //o no la regla de salvado, explicado clase 156
     await createSaverRule(userId,newDevice.dId, true);//el true es para activar la saver rule 
 
     //Llamamos la funcion que pone en true el dispositivo seleccionado
@@ -128,7 +151,7 @@ router.delete("/device", checkAuth, async(req, res) => {
     const userId = req.userData._id;
     const dId = req.query.dId;
 
-
+    await deleteSaverRule(dId);
     const result = await Device.deleteOne({userId: userId, dId: dId});
   
     const toSend = {
@@ -152,7 +175,7 @@ router.delete("/device", checkAuth, async(req, res) => {
   }
 });
 
-
+//UPDATE DEVICE (SELECTOR)
 //con put actualizamos un dispositivo
 router.put("/device", checkAuth, (req, res) => {
   const dId = req.body.dId;
@@ -173,6 +196,26 @@ router.put("/device", checkAuth, (req, res) => {
   }
     
 })
+
+//SAVER-RULE STATUS UPDATER
+router.put('/saver-rule', checkAuth, async (req, res) => {
+
+
+  const rule = req.body.rule;
+
+  console.log(rule)
+
+  await updateSaverRuleStatus(rule.emqxRuleId, rule.status)
+
+  const toSend = {
+    status: "success"
+  };
+
+  res.json(toSend);
+
+
+});
+
 /* 
 ______ _   _ _   _ _____ _____ _____ _____ _   _  _____ 
 |  ___| | | | \ | /  __ \_   _|_   _|  _  | \ | |/  ___|
@@ -221,6 +264,10 @@ async function getSaverRules(userId) {
 
 //create saver rule
 async function createSaverRule(userId, dId, status) {
+  console.log(userId)
+  console.log(dId);
+  console.log(status)
+
 try {
   const url = "http://localhost:8085/api/v4/rules";
 
@@ -245,9 +292,9 @@ try {
 
   //save rule in emqx - grabamos la regla en emqx
   const res = await axios.post(url, newRule, auth);
+  console.log(res.data.data);
 
   if(res.status === 200 && res.data.data){
-    console.log(res.data.data);
     await SaverRule.create({
       userId: userId,
       dId: dId,
@@ -272,7 +319,8 @@ try {
 
 //update saver rule
 async function updateSaverRuleStatus(emqxRuleId, status) {
-  const url = "http://localhost:8085/api/v4/rules/" + emqxRuleId;
+  try {
+    const url = "http://localhost:8085/api/v4/rules/" + emqxRuleId;
 
   const newRule = {
     enabled: status
@@ -281,11 +329,14 @@ async function updateSaverRuleStatus(emqxRuleId, status) {
   if (res.status === 200 && res.data.data) {
     await SaverRule.updateOne({ emqxRuleId: emqxRuleId }, { status: status });
     console.log("Saver Rule Status Updated...".green);
-    return {
-      status: "success",
-      action: "updated"
-    };
+    return true
+  }else{
+    return false
   }
+  } catch (error) {
+    return false
+  }
+  
 }
 //delete saver rule
 async function deleteSaverRule(dId) {
