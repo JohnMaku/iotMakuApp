@@ -1,19 +1,40 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const axios = require('axios');
-const colors = require('colors');
-const { dragDisable } = require('d3');
+const axios = require("axios");
+const colors = require("colors");
 
+import Data from "../models/data.js";
+import Device from "../models/device.js";
 
+router.post("/saver-webhook", async (req, res) => {
+  if (req.headers.token != "121212") {
+    req.sendStatus(404);
+    return;
+  }
 
-router.post('/saver-webhook', async (req, res) => {
+  const data = req.body;
+  //Para rescatar el dId, divide en un array el topic que esta en data, en 
+  //las partes separadas por /  userId/dId/temp/sdata
+  const splittedTopic = data.topic.split("/");
+  const dId = splittedTopic[1];//la posicion de dId es la 1
+  const variable = splittedTopic[2];//nombre de la variable temp
 
-    const data = req.body;
-    console.log(data);
+  var result = await Device.find({ dId: dId, userId: data.userId });
 
-    res.json("{}");
+  if (result.length == 1) {
+    Data.create({
+      userId: data.userId,
+      dId: dId,
+      variable: variable,
+      value: data.payload.value,
+      time: Date.now()
+    });
+    console.log("Data created");
+  }
+  res.sendStatus(200);
 
+  console.log(data);
 });
 
-
-module.exports = router; 
+module.exports = router;
+ 
