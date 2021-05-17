@@ -4,7 +4,7 @@
     <div class="row">
       <card>
         <div slot="header">
-          <h4 class="card-title">Widgets</h4>
+          <h4 class="card-title">Widgets {{ iotIndicatorConfig.column }}</h4>
         </div>
 
         <div class="row">
@@ -408,14 +408,14 @@
             <!-- FORM INDICATOR TYPE -->
             <div v-if="widgetType == 'indicator'">
               <base-input
-                v-model="configIndicator.variableFullName"
+                v-model="iotIndicatorConfig.variableFullName"
                 label="Var Name"
                 type="text"
               >
               </base-input>
 
-              <base-input
-                v-model="configIndicator.icon"
+                <base-input
+                v-model="iotIndicatorConfig.icon"
                 label="Icon"
                 type="text"
               ></base-input>
@@ -423,7 +423,7 @@
               <br />
 
               <el-select
-                v-model="configIndicator.class"
+                v-model="iotIndicatorConfig.class"
                 class="select-success"
                 placeholder="Select Class"
                 style="width: 100%"
@@ -453,7 +453,7 @@
               <br /><br /><br />
 
               <el-select
-                v-model="configIndicator.column"
+                v-model="iotIndicatorConfig.column"
                 class="select-success"
                 placeholder="Select Column Width"
                 style="width: 100%"
@@ -530,7 +530,7 @@
             ></Iotbutton>
             <Iotindicator
               v-if="widgetType == 'indicator'"
-              :config="configIndicator"
+              :config="iotIndicatorConfig"
             ></Iotindicator>
           </div>
         </div>
@@ -589,7 +589,7 @@
     </div>
 
     <!-- SAVE TEMPLATE-->
-    <div class="row" >
+    <div class="row">
       <card>
         <div slot="header">
           <h4 class="card-title">Save Template</h4>
@@ -688,8 +688,7 @@
     </div>
 
     <!-- JSONS -->
-    <Json :value="widgets"></Json>
-    <Json :value="templates"></Json>
+    <Json :value="widgets"></Json>     <!-- <Json :value="templates"></Json> -->
   </div>
 </template>
 
@@ -792,7 +791,7 @@ export default {
         message: "{'fanstatus': 'stop'}",
       },
 
-      configIndicator: {
+      iotIndicatorConfig: {
         userId: "userid",
         selectedDevice: {
           name: "Home",
@@ -823,9 +822,11 @@ export default {
           token: this.$store.state.auth.token,
         },
       };
+
       try {
         const res = await this.$axios.get("/template", axiosHeaders);
         console.log(res.data);
+
         if (res.data.status == "success") {
           this.templates = res.data.data;
         }
@@ -847,7 +848,9 @@ export default {
           token: this.$store.state.auth.token,
         },
       };
+
       console.log(axiosHeaders);
+
       const toSend = {
         template: {
           name: this.templateName,
@@ -858,6 +861,7 @@ export default {
 
       try {
         const res = await this.$axios.post("/template", toSend, axiosHeaders);
+
         if (res.data.status == "success") {
           this.$notify({
             type: "success",
@@ -879,38 +883,44 @@ export default {
 
     //Delete Template
     async deleteTemplate(template) {
-      
+
+
       const axiosHeaders = {
         headers: {
-          token: this.$store.state.auth.token
+          token: this.$store.state.auth.token,
         },
-        params:{
-          templateId:template._id
-        }
+        params: {
+          templateId: template._id,
+        },
       };
+
       console.log(axiosHeaders);
+
       try {
+
         const res = await this.$axios.delete("/template", axiosHeaders);
+
         if (res.data.status == "success") {
           this.$notify({
             type: "success",
             icon: "tim-icons icon-check-2",
-            message: template.name + " was deleted!"
+            message: template.name + " was deleted!",
           });
-          
+
           this.getTemplates();
         }
       } catch (error) {
         this.$notify({
           type: "danger",
           icon: "tim-icons icon-alert-circle-exc",
-          message: "Error getting templates..."
+          message: "Error getting templates...",
         });
         console.log(error);
         return;
       }
     },
 
+    //Add Widget
     addNewWidget() {
       if (this.widgetType == "numberchart") {
         //La funcion makeid genera un codigo aleatorio para dar seguridad al sistema
@@ -927,8 +937,8 @@ export default {
         this.widgets.push(JSON.parse(JSON.stringify(this.configButton)));
       }
       if (this.widgetType == "indicator") {
-        this.configIndicator.variable = this.makeid(10);
-        this.widgets.push(JSON.parse(JSON.stringify(this.configIndicator)));
+        this.iotIndicatorConfig.variable = this.makeid(10);
+        this.widgets.push(JSON.parse(JSON.stringify(this.iotIndicatorConfig)));
       }
     },
     // Borra el widget nodeseado en el preview la funcion splice borra y reagrupa.

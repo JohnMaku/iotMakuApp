@@ -13,6 +13,7 @@ const axios = require("axios");
 */
 import Device from "../models/device.js";
 import SaverRule from "../models/emqx_saver_rule.js";
+import Template from '../models/template.js';
 
 /* 
   ___  ______ _____ 
@@ -37,7 +38,7 @@ router.get("/device", checkAuth, async (req, res) => {
   try {
     const userId = req.userData._id;
     //get devices
-    /**Expicacion de las dos lineas siguientes clase 157
+    /**Expicacion de las dos lineas siguientes clase 157                                                      
      * si find() se usa con solo estos parentesis trae todos los dispositivos, con los
      * otros se hace un filtro
      * Para modificar devices debe ser un objeto de JavaScrit, el que obtenemos es un
@@ -47,7 +48,6 @@ router.get("/device", checkAuth, async (req, res) => {
      * var newObj = Object.assign({}, oldObj)
      * donde pasamos el objeto original(oldObj) y nos retorna el nuevo desacoplado(newObj)
      */
-
     var devices = await Device.find({ userId: userId });
     devices = JSON.parse(JSON.stringify(devices));
 
@@ -58,10 +58,15 @@ router.get("/device", checkAuth, async (req, res) => {
      */
     const saverRules = await getSaverRules(userId);
 
+    //get templates
+    const templates = await getTemplates(userId);
+
+    //console.log(templates);
+
+    //saver rules to -> devices
     devices.forEach((device, index) => {
-      devices[index].saverRule = saverRules.filter(
-        saverRule => saverRule.dId == device.dId
-      )[0];
+      devices[index].saverRule = saverRules.filter(saverRule => saverRule.dId == device.dId)[0];
+      devices[index].template = templates.filter(template => template._id == device.templateId)[0];      
     });
 
     const toSend = {
@@ -72,6 +77,7 @@ router.get("/device", checkAuth, async (req, res) => {
     res.json(toSend);
   } catch (error) {
     console.log("ERROR GETTING DEVICES");
+    console.log(error)
 
     const toSend = {
       status: "error",
@@ -80,7 +86,7 @@ router.get("/device", checkAuth, async (req, res) => {
 
     return res.status(500).json(toSend);
   }
-});
+}); 
 
 /**Formato del nuevo dispositivo
  * {
@@ -169,11 +175,11 @@ router.delete("/device", checkAuth, async (req, res) => {
 
 //UPDATE DEVICE (SELECTOR)
 //con put actualizamos un dispositivo
-router.put("/device", checkAuth, (req, res) => {
+router.put("/device", checkAuth, async (req, res) => {
   const dId = req.body.dId;
   const userId = req.userData._id;
 
-  if (selectDevice(userId, dId)) {
+  if (await selectDevice(userId, dId)) {
     const toSend = {
       status: "success"
     };
@@ -237,6 +243,17 @@ async function selectDevice(userId, dId) {
 /*
  SAVER RULES FUNCTIONS
 */
+
+//get templates
+async function getTemplates(userId) {
+  try {
+    const templates = await Template.find({ userId: userId });
+    return templates;
+  } catch (error) {
+    return false;
+  }
+} 
+
 //get saver rules
 async function getSaverRules(userId) {
   try {

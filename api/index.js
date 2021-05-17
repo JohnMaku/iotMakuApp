@@ -24,6 +24,7 @@ app.use("/api", require("./routes/users.js"));//informacion de usuarios
 app.use("/api", require("./routes/templates.js"));
 app.use("/api", require("./routes/webhooks.js"));//se comunica con mi dashboard emqx
 app.use("/api", require("./routes/emqxapi.js"));
+app.use("/api", require("./routes/alarms.js"))
 // permite ordenar las rutas(anteriormente creadas) o endpoints en archivos separados.
 module.exports = app;
 

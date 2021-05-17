@@ -1,6 +1,8 @@
 export const state = () => ({
   auth: null,
-  devices: []
+  devices: [],
+  selectedDevice: {}
+
 });
 //como los valores de los estados no se pueden cambiar llamandolos directamente,
 //se debe hacer atravez de una mutacion como se indica abajo, el nombre del metodo (setAuth)
@@ -15,6 +17,10 @@ export const mutations = {
 
   setDevices(state, devices) {
     state.devices = devices;
+  },
+
+  setSelectedDevice(state, device) {
+    state.selectedDevice = device
   }
 };
 
@@ -47,7 +53,7 @@ export const actions = {
     const axiosHeader = {
       headers: {
         //traemos el token que se almacena en el dd luego de hacer un login
-        token: this.state.auth.token
+        token: this.state.auth.token 
       }
     };
     //hacemos el request de axios, llamamos el metodo get le paso la url("/device")(que esta en api/
@@ -55,6 +61,14 @@ export const actions = {
     // y le pasamos el token, luego usamos un callback(.then) que es la funcion con la respuesta
     this.$axios.get("/device", axiosHeader).then(res => {
       console.log(res.data.data);
+      res.data.data.forEach((device, index) => {
+        if (device.selected){
+          this.commit("setSelectedDevice", device)
+          $nuxt.$emit("selectedDeviceIndex", index)
+        }
+      })
+
+
       this.commit("setDevices", res.data.data) //llamo a la mutacion setDevices y le paso la lista de 
       //dispositivos que acaba de llegarme
     });

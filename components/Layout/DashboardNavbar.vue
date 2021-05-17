@@ -10,6 +10,7 @@
         class="navbar-toggle d-inline"
         :class="{ toggled: $sidebar.showSidebar }"
       >
+      <!-- Boton cuando la ventana esta minimizada como 4 rayitas y nombre de ventana -->
         <button type="button" class="navbar-toggler" @click="toggleSidebar">
           <span class="navbar-toggler-bar bar1"></span>
           <span class="navbar-toggler-bar bar2"></span>
@@ -20,33 +21,23 @@
     </div>
 
     <ul class="navbar-nav" :class="$rtl.isRTL ? 'mr-auto' : 'ml-auto'">
-      <div class="search-bar input-group" @click="searchModalVisible = true">
-        <button
-          class="btn btn-link"
-          id="search-button"
-          data-toggle="modal"
-          data-target="#searchModal"
-        >
-          <i class="tim-icons icon-zoom-split"></i>
-        </button>
-        <!-- You can choose types of search input -->
-      </div>
-      <modal
-        :show.sync="searchModalVisible"
-        class="modal-search"
-        id="searchModal"
-        :centered="false"
-        :show-close="true"
+        <!-- barra de busqueda en el header  -->
+    <!-- <div class="search-bar input-group" @click="searchModalVisible = true"> -->
+      <el-select
+        class="select-success"
+        placeholder="Select Device"
+        @change="selectDevice()"
+        v-model="selectedDevice"
       >
-        <input
-          slot="header"
-          v-model="searchQuery"
-          type="text"
-          class="form-control"
-          id="inlineFormInputGroup"
-          placeholder="SEARCH"
-        />
-      </modal>
+        <el-option
+          v-for="(device, index) in $store.state.devices"
+          :value="index"
+          :label="device.name"
+          :key="device._id"
+        >
+        </el-option>
+      </el-select>
+
       <base-dropdown
         tag="li"
         :menu-on-right="!$rtl.isRTL"
@@ -54,9 +45,7 @@
         title-classes="nav-link"
         class="nav-item"
       >
-        <template
-          slot="title"
-        >
+        <template slot="title">
           <div class="notification d-none d-lg-block d-xl-block"></div>
           <i class="tim-icons icon-sound-wave"></i>
           <p class="d-lg-none">New Notifications</p>
@@ -89,9 +78,7 @@
         title-classes="nav-link"
         menu-classes="dropdown-navbar"
       >
-        <template
-          slot="title"
-        >
+        <template slot="title">
           <div class="photo"><img src="img/mike.jpg" /></div>
           <b class="caret d-none d-lg-block d-xl-block"></b>
           <p class="d-lg-none">Log out</p>
@@ -111,40 +98,75 @@
   </base-nav>
 </template>
 <script>
-import { CollapseTransition } from 'vue2-transitions';
-import { BaseNav, Modal } from '@/components';
+import { CollapseTransition } from "vue2-transitions";
+import { BaseNav, Modal } from "@/components";
+import { Select, Option } from "element-ui";
 
 export default {
   components: {
     CollapseTransition,
     BaseNav,
-    Modal
+    Modal,
+    [Option.name]: Option,
+    [Select.name]: Select,
   },
   computed: {
     routeName() {
       const { path } = this.$route;
-      let parts = path.split('/')
-      if(parts == ','){
-        return 'Dashboard';
+      let parts = path.split("/");
+      if (parts == ",") {
+        return "Dashboard";
       }
-      return parts.map(p => this.capitalizeFirstLetter(p)).join(' ');
+      return parts.map((p) => this.capitalizeFirstLetter(p)).join(" ");
     },
     isRTL() {
       return this.$rtl.isRTL;
-    }
+    },
   },
   data() {
     return {
       activeNotifications: false,
       showMenu: false,
       searchModalVisible: false,
-      searchQuery: ''
+      searchQuery: "",
+      selectedDevice: null,
     };
   },
+  mounted() {
+    this.$store.dispatch("getDevices");
+    this.$nuxt.$on("selectedDeviceIndex", this.updateSelectedDeviceIndex);
+  },
+  beforeDestroy(){
+    this.$nuxt.$off("selectedDeviceIndex");
+  },
   methods: {
+    updateSelectedDeviceIndex(index) {
+      this.selectedDevice = index;
+    },
+    selectDevice() {
+      const device = this.$store.state.devices[this.selectedDevice];
+      const axiosHeaders = {
+        headers: {
+          token: this.$store.state.auth.token,
+        },
+      };
+      const toSend = {
+        dId: device.dId,
+      };
+      this.$axios
+        .put("/device", toSend, axiosHeaders)
+        .then((res) => {
+          this.$store.dispatch("getDevices");
+        })
+        .catch((e) => {
+          console.log(e);
+          return;
+        });
+    },
+
     capitalizeFirstLetter(string) {
-      if (!string || typeof string !== 'string') {
-        return ''
+      if (!string || typeof string !== "string") {
+        return "";
       }
       return string.charAt(0).toUpperCase() + string.slice(1);
     },
@@ -156,8 +178,8 @@ export default {
     },
     toggleMenu() {
       this.showMenu = !this.showMenu;
-    }
-  }
+    },
+  },
 };
 </script>
 <style scoped>

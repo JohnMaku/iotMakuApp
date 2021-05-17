@@ -2,6 +2,7 @@
   <div>
     <!--FORM ADD DEVICE -->
     <div class="row">
+      <Json :value="$store.state.selectedDevice"></Json>
       <!-- Esta es la tarjeta -->
       <card>
         <div slot="header">
@@ -148,6 +149,7 @@
       {{devices}}
     </pre> -->
     <!-- <Json :value="templates"></Json>    visualiza codigo al final de la pagina de devices -->
+    <Json :value="$store.state.selectedDevice"></Json>
     <Json :value="$store.state.devices"></Json>
   </div>
 </template>
@@ -184,7 +186,7 @@ export default {
     // una vez se carge la pagina llamamos la funcion getDevices para que el usuario tenga la lista
     // de sus dispositivos.
     //la funcion getDevices() esta en store/index en la accion getDevices
-    this.$store.dispatch("getDevices");
+    //this.$store.dispatch("getDevices");
     this.getTemplates();
   },
   // declaracion de metodos o funciones.
@@ -201,9 +203,8 @@ export default {
       this.$axios
         .put("/saver-rule", toSend, axiosHeaders)
         .then((res) => {
-
           if (res.data.status == "success") {
-            this.$store.dispatch("getDevices"); 
+            this.$store.dispatch("getDevices");
             this.$notify({
               type: "success",
               icon: "tim-icons icon-check-2",
@@ -217,7 +218,7 @@ export default {
           this.$notify({
             type: "danger",
             icon: "tim-icons icon-alert-circle-exc",
-             message: " Error updating saver rule status"
+            message: " Error updating saver rule status",
           });
           return;
         });
@@ -385,7 +386,7 @@ export default {
             message: " Error deleting " + device.name,
           });
         });
-    },      
+    },
   },
 };
 </script>

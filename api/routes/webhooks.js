@@ -6,35 +6,42 @@ const colors = require("colors");
 import Data from "../models/data.js";
 import Device from "../models/device.js";
 
+//SAVER WEBHOOK
 router.post("/saver-webhook", async (req, res) => {
-  if (req.headers.token != "121212") {
-    req.sendStatus(404);
-    return;
-  }
-
-  const data = req.body;
-  //Para rescatar el dId, divide en un array el topic que esta en data, en 
-  //las partes separadas por /  userId/dId/temp/sdata
-  const splittedTopic = data.topic.split("/");
-  const dId = splittedTopic[1];//la posicion de dId es la 1
-  const variable = splittedTopic[2];//nombre de la variable temp
-
-  var result = await Device.find({ dId: dId, userId: data.userId });
-
-  if (result.length == 1) {
-    Data.create({
-      userId: data.userId,
-      dId: dId,
-      variable: variable,
-      value: data.payload.value,
-      time: Date.now()
-    });
-    console.log("Data created");
-  }
-  res.sendStatus(200);
-
-  console.log(data);
-});
+    try {
+        if (req.headers.token != "121212") {
+            req.sendStatus(404);
+            return;
+          }
+        
+          const data = req.body;
+          //Para rescatar el dId, divide en un array el topic que esta en data, en 
+          //las partes separadas por /  userId/dId/temp/sdata
+          const splittedTopic = data.topic.split("/");
+          const dId = splittedTopic[1];//la posicion de dId es la 1
+          const variable = splittedTopic[2];//nombre de la variable temp
+        
+          var result = await Device.find({ dId: dId, userId: data.userId });
+        
+          if (result.length == 1) {
+            Data.create({
+              userId: data.userId,
+              dId: dId,
+              variable: variable,
+              value: data.payload.value,
+              time: Date.now()
+            });
+            console.log("Data created");
+          }
+          res.sendStatus(200);
+        
+        
+        
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(200);        
+    }
+})
 
 module.exports = router;
  
