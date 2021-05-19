@@ -13,7 +13,8 @@ const axios = require("axios");
 */
 import Device from "../models/device.js";
 import SaverRule from "../models/emqx_saver_rule.js";
-import Template from '../models/template.js';
+import Template from "../models/template.js";
+import AlarmRule from "../models/emqx_alarm_rule.js";
 
 /* 
   ___  ______ _____ 
@@ -38,7 +39,7 @@ router.get("/device", checkAuth, async (req, res) => {
   try {
     const userId = req.userData._id;
     //get devices
-    /**Expicacion de las dos lineas siguientes clase 157                                                      
+    /**Expicacion de las dos lineas siguientes clase 157
      * si find() se usa con solo estos parentesis trae todos los dispositivos, con los
      * otros se hace un filtro
      * Para modificar devices debe ser un objeto de JavaScrit, el que obtenemos es un
@@ -61,12 +62,22 @@ router.get("/device", checkAuth, async (req, res) => {
     //get templates
     const templates = await getTemplates(userId);
 
+    //get alarm rules
+    const alarmRules = await getAlarmRules(userId);
+
     //console.log(templates);
 
     //saver rules to -> devices
     devices.forEach((device, index) => {
-      devices[index].saverRule = saverRules.filter(saverRule => saverRule.dId == device.dId)[0];
-      devices[index].template = templates.filter(template => template._id == device.templateId)[0];      
+      devices[index].saverRule = saverRules.filter(
+        saverRule => saverRule.dId == device.dId
+      )[0];
+      devices[index].template = templates.filter(
+        template => template._id == device.templateId
+      )[0];
+      devices[index].alarmRules = alarmRules.filter(
+        alarmRule => alarmRule.dId == device.dId
+      );
     });
 
     const toSend = {
@@ -77,7 +88,7 @@ router.get("/device", checkAuth, async (req, res) => {
     res.json(toSend);
   } catch (error) {
     console.log("ERROR GETTING DEVICES");
-    console.log(error)
+    console.log(error);
 
     const toSend = {
       status: "error",
@@ -86,7 +97,7 @@ router.get("/device", checkAuth, async (req, res) => {
 
     return res.status(500).json(toSend);
   }
-}); 
+});
 
 /**Formato del nuevo dispositivo
  * {
@@ -218,6 +229,18 @@ ______ _   _ _   _ _____ _____ _____ _____ _   _  _____
 \_|    \___/\_| \_/\____/ \_/  \___/ \___/\_| \_/\____/  
 */
 
+async function getAlarmRules(userId) {
+
+  try {
+      const rules = await AlarmRule.find({ userId: userId });
+      return rules;
+  } catch (error) {
+      return "error";
+  }
+
+}
+
+
 async function selectDevice(userId, dId) {
   try {
     //en esta parte actualizaremos con false los dispositivos del usuario que me llega como parametro
@@ -252,7 +275,7 @@ async function getTemplates(userId) {
   } catch (error) {
     return false;
   }
-} 
+}
 
 //get saver rules
 async function getSaverRules(userId) {
