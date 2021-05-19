@@ -95,6 +95,7 @@ router.get("/device", checkAuth, async (req, res) => {
       error: error
     };
 
+    
     return res.status(500).json(toSend);
   }
 });
