@@ -1,7 +1,8 @@
 export const state = () => ({
   auth: null,
   devices: [],
-  selectedDevice: {}
+  selectedDevice: {},
+  notifications: []
 
 });
 //como los valores de los estados no se pueden cambiar llamandolos directamente,
@@ -13,6 +14,10 @@ export const state = () => ({
 export const mutations = {
   setAuth(state, auth) {
     state.auth = auth;
+  },
+
+  setNotifications(state, notifications) {
+    state.notifications = notifications;
   },
 
   setDevices(state, devices) {
@@ -71,6 +76,26 @@ export const actions = {
 
       this.commit("setDevices", res.data.data) //llamo a la mutacion setDevices y le paso la lista de 
       //dispositivos que acaba de llegarme
+    }).catch(error => {
+      console.log(error);
+    });
+
+  },
+
+  getNotifications() {
+
+    const axiosHeader = {
+      headers: {
+        token: this.state.auth.token
+      }
+    };
+
+    this.$axios.get("/notifications", axiosHeader)
+    .then(res => {
+      console.log(res.data.data);
+      this.commit("setNotifications", res.data.data)
+    }).catch(error => {
+      console.log(error);
     });
   },
 };

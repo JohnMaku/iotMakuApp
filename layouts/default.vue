@@ -16,7 +16,7 @@
           :link="{
             name: 'Dashboard',
             icon: 'tim-icons icon-chart-pie-36',
-            path: '/dashboard'
+            path: '/dashboard',
           }"
         >
         </sidebar-item>
@@ -25,7 +25,7 @@
           :link="{
             name: 'Devices',
             icon: 'tim-icons icon-chart-pie-36',
-            path: '/devices'
+            path: '/devices',
           }"
         >
         </sidebar-item>
@@ -34,7 +34,7 @@
           :link="{
             name: 'Alarms',
             icon: 'tim-icons icon-chart-pie-36',
-            path: '/alarms'
+            path: '/alarms',
           }"
         >
         </sidebar-item>
@@ -43,7 +43,7 @@
           :link="{
             name: 'Templates',
             icon: 'tim-icons icon-chart-pie-36',
-            path: '/templates'
+            path: '/templates',
           }"
         >
         </sidebar-item>
@@ -63,10 +63,7 @@
       <dashboard-navbar></dashboard-navbar>
       <router-view name="header"></router-view>
 
-      <div
-        :class="{ content: !isFullScreenRoute }"
-        @click="toggleSidebar"
-      >
+      <div :class="{ content: !isFullScreenRoute }" @click="toggleSidebar">
         <zoom-center-transition :duration="1000" mode="out-in">
           <!-- your content here -->
           <nuxt></nuxt>
@@ -77,102 +74,163 @@
   </div>
 </template>
 <script>
-  /* eslint-disable no-new */
-  import PerfectScrollbar from 'perfect-scrollbar';
-  import 'perfect-scrollbar/css/perfect-scrollbar.css';
-  import SidebarShare from '@/components/Layout/SidebarSharePlugin';
-  function hasElement(className) {
-    return document.getElementsByClassName(className).length > 0;
+/* eslint-disable no-new */
+import PerfectScrollbar from "perfect-scrollbar";
+import "perfect-scrollbar/css/perfect-scrollbar.css";
+import SidebarShare from "@/components/Layout/SidebarSharePlugin";
+function hasElement(className) {
+  return document.getElementsByClassName(className).length > 0;
+}
+
+function initScrollbar(className) {
+  if (hasElement(className)) {
+    new PerfectScrollbar(`.${className}`);
+  } else {
+    // try to init it later in case this component is loaded async
+    setTimeout(() => {
+      initScrollbar(className);
+    }, 100);
   }
+}
 
-  function initScrollbar(className) {
-    if (hasElement(className)) {
-      new PerfectScrollbar(`.${className}`);
-    } else {
-      // try to init it later in case this component is loaded async
-      setTimeout(() => {
-        initScrollbar(className);
-      }, 100);
-    }
-  }
+import DashboardNavbar from "@/components/Layout/DashboardNavbar.vue";
+import ContentFooter from "@/components/Layout/ContentFooter.vue";
+import DashboardContent from "@/components/Layout/Content.vue";
+import { SlideYDownTransition, ZoomCenterTransition } from "vue2-transitions";
+import mqtt from "mqtt";
 
-  import DashboardNavbar from '@/components/Layout/DashboardNavbar.vue';
-  import ContentFooter from '@/components/Layout/ContentFooter.vue';
-  import DashboardContent from '@/components/Layout/Content.vue';
-  import { SlideYDownTransition, ZoomCenterTransition } from 'vue2-transitions';
-
-  export default {
-    components: {
-      DashboardNavbar,
-      ContentFooter,
-      DashboardContent,
-      SlideYDownTransition,
-      ZoomCenterTransition,
-      SidebarShare
+export default {
+  components: {
+    DashboardNavbar,
+    ContentFooter,
+    DashboardContent,
+    SlideYDownTransition,
+    ZoomCenterTransition,
+    SidebarShare,
+  },
+  data() {
+    // Aqui cambiamos el color inicio de la sidebar
+    return {
+      sidebarBackground: "blue", //vue|blue|orange|green|red|primary
+      client: null,
+    };
+  },
+  computed: {
+    isFullScreenRoute() {
+      return this.$route.path === "/maps/full-screen";
     },
-    data() {    // Aqui cambiamos el color inicio de la sidebar 
-      return {
-        sidebarBackground: 'blue' //vue|blue|orange|green|red|primary
+  },
+  methods: {
+    startMqttClient() {
+      const options = {
+        host: "localhost",
+        port: 8083,
+        endpoint: "/mqtt",
+        clean: true,
+        connectTimeout: 5000,
+        reconnectPeriod: 5000,
+        // Certification Information
+        clientId:
+          "web_" +
+          this.$store.state.auth.userData.name +
+          "_" +
+          Math.floor(Math.random() * 1000000 + 1),
+        username: "superuser",
+        password: "superuser",
       };
-    },
-    computed: {
-      isFullScreenRoute() {
-        return this.$route.path === '/maps/full-screen'
+      //ex topic: "userid/did/variableId/sdata"
+      const deviceSubscribeTopic =
+        this.$store.state.auth.userData._id + "/+/+/sdata";
+      const notifSubscribeTopic =
+        this.$store.state.auth.userData._id + "/+/+/notif";
+      const connectUrl =
+        "ws://" + options.host + ":" + options.port + options.endpoint;
+      try {
+        this.client = mqtt.connect(connectUrl, options);
+      } catch (error) {
+        console.log(error);
       }
+      //MQTT CONNECTION SUCCESS
+      this.client.on("connect", () => {
+        console.log("Connection succeeded!");
+        //SDATA SUBSCRIBE
+        this.client.subscribe(deviceSubscribeTopic, { qos: 0 }, (err) => {
+          if (err) {
+            console.log("Error in DeviceSubscription");
+            return;
+          }
+          console.log("Device subscription Success");
+        });
+        //NOTIF SUBSCRIBE
+        this.client.subscribe(notifSubscribeTopic, { qos: 0 }, (err) => {
+          if (err) {
+            console.log("Error in NotifSubscription");
+            return;
+          }
+          console.log("Notif subscription Success");
+        });
+      });
+      this.client.on("error", (error) => {
+        console.log("Connection failed", error);
+      });
+      this.client.on("reconnect", (error) => {
+        console.log("reconnecting:", error);
+      });
     },
-    methods: {
-      toggleSidebar() {
-        if (this.$sidebar.showSidebar) {
-          this.$sidebar.displaySidebar(false);
-        }
-      },
-      initScrollbar() {
-        let docClasses = document.body.classList;
-        let isWindows = navigator.platform.startsWith('Win');
-        if (isWindows) {
-          // if we are on windows OS we activate the perfectScrollbar function
-          initScrollbar('sidebar');
-          initScrollbar('main-panel');
-          initScrollbar('sidebar-wrapper');
 
-          docClasses.add('perfect-scrollbar-on');
-        } else {
-          docClasses.add('perfect-scrollbar-off');
-        }
+    toggleSidebar() {
+      if (this.$sidebar.showSidebar) {
+        this.$sidebar.displaySidebar(false);
       }
     },
-    mounted() {
-      this.initScrollbar();
-    }
-  };
+    initScrollbar() {
+      let docClasses = document.body.classList;
+      let isWindows = navigator.platform.startsWith("Win");
+      if (isWindows) {
+        // if we are on windows OS we activate the perfectScrollbar function
+        initScrollbar("sidebar");
+        initScrollbar("main-panel");
+        initScrollbar("sidebar-wrapper");
+
+        docClasses.add("perfect-scrollbar-on");
+      } else {
+        docClasses.add("perfect-scrollbar-off");
+      }
+    },
+  },
+  mounted() {
+    this.initScrollbar();
+    this.startMqttClient();
+  },
+};
 </script>
 <style lang="scss">
-  $scaleSize: 0.95;
-  @keyframes zoomIn95 {
-    from {
-      opacity: 0;
-      transform: scale3d($scaleSize, $scaleSize, $scaleSize);
-    }
-    to {
-      opacity: 1;
-    }
+$scaleSize: 0.95;
+@keyframes zoomIn95 {
+  from {
+    opacity: 0;
+    transform: scale3d($scaleSize, $scaleSize, $scaleSize);
   }
+  to {
+    opacity: 1;
+  }
+}
 
-  .main-panel .zoomIn {
-    animation-name: zoomIn95;
-  }
+.main-panel .zoomIn {
+  animation-name: zoomIn95;
+}
 
-  @keyframes zoomOut95 {
-    from {
-      opacity: 1;
-    }
-    to {
-      opacity: 0;
-      transform: scale3d($scaleSize, $scaleSize, $scaleSize);
-    }
+@keyframes zoomOut95 {
+  from {
+    opacity: 1;
   }
+  to {
+    opacity: 0;
+    transform: scale3d($scaleSize, $scaleSize, $scaleSize);
+  }
+}
 
-  .main-panel .zoomOut {
-    animation-name: zoomOut95;
-  }
+.main-panel .zoomOut {
+  animation-name: zoomOut95;
+}
 </style>
