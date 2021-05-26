@@ -4,7 +4,7 @@
     <div class="row">
       <card>
         <div slot="header">
-          <h4 class="card-title">Widgets {{ iotIndicatorConfig.column }}</h4>
+           <h4 class="card-title">Widgets {{ iotIndicatorConfig.column }}</h4> <!--  -->
         </div>
 
         <div class="row">
@@ -759,7 +759,7 @@ export default {
         column: "col-6",
       },
 
-      iotconfigIndicator: {
+      iotIndicatorConfig: {
         userId: "userid",
         selectedDevice: {
           name: "Home",
@@ -786,27 +786,12 @@ export default {
         variable: "var1",
         icon: "fa-sun",
         column: "col-6",
-        widget: "indicator",
+        widget: "button",
         class: "danger",
         message: "{'fanstatus': 'stop'}",
       },
 
-      iotIndicatorConfig: {
-        userId: "userid",
-        selectedDevice: {
-          name: "Home",
-          dId: "8888",
-          templateName: "Power Sensor",
-          templateId: "984237562348756ldksjfh",
-          saverRule: false,
-        },
-        variableFullName: "Pump",
-        variable: "var1",
-        icon: "fa-sun",
-        column: "col-6",
-        widget: "indicator",
-        class: "success",
-      },
+ 
     };
   },
 

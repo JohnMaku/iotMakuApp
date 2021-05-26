@@ -120,6 +120,9 @@ export default {
       return this.$route.path === "/maps/full-screen";
     },
   },
+  beforeDestroy() {
+    this.$nuxt.$off("mqtt-sender");
+  },
   methods: {
     startMqttClient() {
       const options = {
@@ -194,16 +197,25 @@ export default {
             this.$store.dispatch("getNotifications");
             return;
           } else if (msgType == "sdata") {
+            //   sistema de mensajeria interna de nuxt. Para enviar el mensaje sdata a todos los
+            //   widget, como el mensaje entrante es un json y los widget esperan un objeto Java
+            //   script lo convertimos primero con  JSON.parse
+            $nuxt.$emit(topic, JSON.parse(message.toString()));
+            return;
           }
         } catch (error) {
           console.log(error);
         }
       });
+
+      $nuxt.$on("mqtt-sender", (toSend) => {
+        this.client.publish(toSend.topic, JSON.stringify(toSend.msg));
+      });
     },
 
     toggleSidebar() {
-      if (this.$sidebar.showSidebar) {  
-        this.$sidebar.displaySidebar(false);
+      if (this.$sidebar.showSidebar) {
+        this.$sidebar.displaySidebar(false); 
       }
     },
     initScrollbar() {
