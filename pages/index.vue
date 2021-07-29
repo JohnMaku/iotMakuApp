@@ -1,6 +1,6 @@
 <!--Esta es la pagina que arranca cuando escribimos "localhost:3000" -->
 <template>
-    <div class="row"><h3></h3>     </div>
+  <div class="row"><h3></h3></div>
 </template>
 
 <!--En esta parte redirigiremos aotra pagina,
@@ -9,9 +9,9 @@ instancia de nuxt, de la cual usamos al router que gestiona las rutas y este tie
 llamado push con el cual le pasamos a donde queremos ir "/dashboard" -->
 <script>
 export default {
-    mounted() {
-        $nuxt.$router.push("/dashboard")
-    }
-    
-}
+  middleware: "authenticated",
+  mounted() {
+    $nuxt.$router.push("/dashboard");
+  },
+};
 </script>

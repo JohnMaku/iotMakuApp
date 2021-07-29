@@ -4,7 +4,8 @@
     <div class="row">
       <card>
         <div slot="header">
-           <h4 class="card-title">Widgets {{ iotIndicatorConfig.column }}</h4> <!--  -->
+          <h4 class="card-title">Widgets {{ iotIndicatorConfig.column }}</h4>
+          <!--  -->
         </div>
 
         <div class="row">
@@ -414,7 +415,7 @@
               >
               </base-input>
 
-                <base-input
+              <base-input
                 v-model="iotIndicatorConfig.icon"
                 label="Icon"
                 type="text"
@@ -688,7 +689,8 @@
     </div>
 
     <!-- JSONS -->
-    <Json :value="widgets"></Json>     <!-- <Json :value="templates"></Json> -->
+    <Json :value="widgets"></Json>
+    <!-- <Json :value="templates"></Json> -->
   </div>
 </template>
 
@@ -720,6 +722,8 @@ export default {
         },
         variableFullName: "temperature",
         variable: "varname",
+//        variableType: "input",
+//        variableSendFreq: "30",//en segundos
         unit: "Watts",
         class: "success",
         column: "col-12",
@@ -738,26 +742,28 @@ export default {
         },
         variableFullName: "Luz",
         variable: "varname",
+//        variableType: "output",
+//        variableSendFreq: "30",//en segundos
         class: "danger",
         widget: "switch",
         icon: "fa-bath",
         column: "col-6",
       },
 
-      configButton: {
-        userId: "userid",
-        selectedDevice: {
-          name: "Home",
-          dId: "8888",
-        },
-        variableFullName: "temperature",
-        text: "send",
-        message: "testing123",
-        variable: "varname",
-        widget: "button",
-        icon: "fa-bath",
-        column: "col-6",
-      },
+      // configButton: {
+      //   userId: "userid",
+      //   selectedDevice: {
+      //     name: "Home",
+      //     dId: "8888",
+      //   },
+      //   variableFullName: "temperature",
+      //   text: "send",
+      //   message: "testing123",
+      //   variable: "varname",
+      //   widget: "button",
+      //   icon: "fa-bath",
+      //   column: "col-6",
+      // },
 
       iotIndicatorConfig: {
         userId: "userid",
@@ -767,6 +773,8 @@ export default {
         },
         variableFullName: "temperature",
         variable: "varname",
+//        variableType: "input",
+//        variableSendFreq: "30",//en segundos
         class: "success",
         widget: "indicator",
         icon: "fa-bath",
@@ -784,14 +792,14 @@ export default {
         },
         variableFullName: "Pump",
         variable: "var1",
+//        variableType: "output",
+//        variableSendFreq: "30",//en segundos
         icon: "fa-sun",
         column: "col-6",
         widget: "button",
         class: "danger",
         message: "{'fanstatus': 'stop'}",
       },
-
- 
     };
   },
 
@@ -868,8 +876,6 @@ export default {
 
     //Delete Template
     async deleteTemplate(template) {
-
-
       const axiosHeaders = {
         headers: {
           token: this.$store.state.auth.token,
@@ -882,7 +888,6 @@ export default {
       console.log(axiosHeaders);
 
       try {
-
         const res = await this.$axios.delete("/template", axiosHeaders);
 
         if (res.data.status == "success") {
