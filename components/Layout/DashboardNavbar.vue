@@ -55,9 +55,9 @@
         </template>
 
         <li
-          @click="notificationReaded(notification._id)" 
-          v-for="notification in  $store.state.notifications"
-          class="nav-link" 
+          @click="notificationReaded(notification._id)"
+          v-for="notification in $store.state.notifications"
+          class="nav-link"
         >
           <a href="#" class="nav-item dropdown-item">
             <b style="color: orangered">{{ unixToDate(notification.time) }}</b>
@@ -76,13 +76,13 @@
         :menu-on-right="!$rtl.isRTL"
         title-tag="a"
         class="nav-item"
-        title-classes="nav-link" 
+        title-classes="nav-link"
         menu-classes="dropdown-navbar"
       >
         <template slot="title">
           <div class="photo"><img src="img/mike.jpg" /></div>
           <b class="caret d-none d-lg-block d-xl-block"></b>
-          <p class="d-lg-none">Log out</p>
+          <p @click="logOut()" class="d-lg-none">Log out</p>
         </template>
         <li class="nav-link">
           <a href="#" class="nav-item dropdown-item">Profile</a>
@@ -92,7 +92,9 @@
         </li>
         <div class="dropdown-divider"></div>
         <li class="nav-link">
-          <a href="#" class="nav-item dropdown-item">Log out</a>
+          <a href="#" @click="logOut()" class="nav-item dropdown-item"
+            >Log out</a
+          >
         </li>
       </base-dropdown>
     </ul>
@@ -153,8 +155,8 @@ export default {
         },
       };
 
-      var auto
-      
+      var auto;
+
       const toSend = {
         notifId: notifId,
       };
@@ -167,6 +169,13 @@ export default {
           console.log(e);
           return;
         });
+    },
+    logOut() {
+      console.log("logout");
+      localStorage.clear();
+      const auth = {};
+      this.$store.commit("setAuth", auth);
+      window.location.href = "/login";
     },
 
     selectDevice() {

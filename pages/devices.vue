@@ -88,6 +88,8 @@
           </el-table-column>
           <el-table-column prop="name" label="Name"></el-table-column>
           <el-table-column prop="dId" label="Device Id"></el-table-column>
+
+          <el-table-column prop="password" label="Password"></el-table-column>
           <el-table-column
             prop="templateName"
             label="Template"
@@ -149,8 +151,8 @@
       {{devices}}
     </pre> -->
     <!-- <Json :value="templates"></Json>    visualiza codigo al final de la pagina de devices -->
-    <Json :value="$store.state.selectedDevice"></Json>
-    <Json :value="$store.state.devices"></Json>
+    <!--<Json :value="$store.state.selectedDevice"></Json> -->
+    <!--<Json :value="$store.state.devices"></Json>-->
   </div>
 </template>
 
@@ -288,12 +290,10 @@ export default {
         },
       };
       //ESCRIBIMOS EL NOMBRE Y EL ID DEL TEMPLATE SELECCIONADO EN EL OBJETO newDevice
-      this.newDevice.templateId = this.templates[
-        this.selectedIndexTemplate
-      ]._id;
-      this.newDevice.templateName = this.templates[
-        this.selectedIndexTemplate
-      ].name;
+      this.newDevice.templateId =
+        this.templates[this.selectedIndexTemplate]._id;
+      this.newDevice.templateName =
+        this.templates[this.selectedIndexTemplate].name;
       const toSend = {
         newDevice: this.newDevice,
       };

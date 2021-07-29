@@ -307,12 +307,14 @@ export default {
       }
       this.newRule.dId = this.$store.state.selectedDevice.dId;
       this.newRule.deviceName = this.$store.state.selectedDevice.name;
-      this.newRule.variableFullName = this.$store.state.selectedDevice.template.widgets[
-        this.selectedWidgetIndex
-      ].variableFullName;
-      this.newRule.variable = this.$store.state.selectedDevice.template.widgets[
-        this.selectedWidgetIndex
-      ].variable;
+      this.newRule.variableFullName =
+        this.$store.state.selectedDevice.template.widgets[
+          this.selectedWidgetIndex
+        ].variableFullName;
+      this.newRule.variable =
+        this.$store.state.selectedDevice.template.widgets[
+          this.selectedWidgetIndex
+        ].variable;
       const axiosHeaders = {
         headers: {
           token: this.$store.state.auth.token,
@@ -329,6 +331,7 @@ export default {
             this.newRule.condition = null;
             this.newRule.value = null;
             this.newRule.triggerTime = null;
+            this.selectedWidgetIndex = null;
 
             this.$notify({
               type: "success",

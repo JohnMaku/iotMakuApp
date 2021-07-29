@@ -74,6 +74,12 @@
                 label="Icon"
                 type="text"
               ></base-input>
+              <br />
+              <base-input
+                v-model.number="ncConfig.variableSendFreq"
+                label="Send Freq"
+                type="number"
+              ></base-input>
 
               <br />
 
@@ -420,6 +426,12 @@
                 label="Icon"
                 type="text"
               ></base-input>
+              <br />
+              <base-input
+                v-model="iotIndicatorConfig.variableSendFreq"
+                label="Send Freq"
+                type="text"
+              ></base-input>
 
               <br />
 
@@ -689,7 +701,7 @@
     </div>
 
     <!-- JSONS -->
-    <Json :value="widgets"></Json>
+    <!-- <Json :value="widgets"></Json>-->
     <!-- <Json :value="templates"></Json> -->
   </div>
 </template>
@@ -722,15 +734,15 @@ export default {
         },
         variableFullName: "temperature",
         variable: "varname",
-//        variableType: "input",
-//        variableSendFreq: "30",//en segundos
+        variableType: "input",
+        variableSendFreq: "30", //en segundos
         unit: "Watts",
         class: "success",
         column: "col-12",
         decimalPlaces: 2,
         widget: "numberchart",
-        icon: "fa-bath",
-        chartTimeAgo: 1566,
+        icon: "fa-sun",
+        chartTimeAgo: 60,
         demo: true,
       },
 
@@ -742,8 +754,8 @@ export default {
         },
         variableFullName: "Luz",
         variable: "varname",
-//        variableType: "output",
-//        variableSendFreq: "30",//en segundos
+        variableType: "output",
+        variableSendFreq: "30", //en segundos
         class: "danger",
         widget: "switch",
         icon: "fa-bath",
@@ -773,8 +785,8 @@ export default {
         },
         variableFullName: "temperature",
         variable: "varname",
-//        variableType: "input",
-//        variableSendFreq: "30",//en segundos
+        variableType: "input",
+        variableSendFreq: "30", //en segundos
         class: "success",
         widget: "indicator",
         icon: "fa-bath",
@@ -792,8 +804,8 @@ export default {
         },
         variableFullName: "Pump",
         variable: "var1",
-//        variableType: "output",
-//        variableSendFreq: "30",//en segundos
+        variableType: "output",
+        variableSendFreq: "30", //en segundos
         icon: "fa-sun",
         column: "col-6",
         widget: "button",
@@ -862,6 +874,7 @@ export default {
             message: "Template created!",
           });
           this.getTemplates();
+          this.widgets = [];
         }
       } catch (error) {
         this.$notify({
@@ -889,6 +902,18 @@ export default {
 
       try {
         const res = await this.$axios.delete("/template", axiosHeaders);
+        console.log(res.data);
+        if (res.data.status == "fail" && res.data.error == "template in use") {
+          this.$notify({
+            type: "danger",
+            icon: "tim-icons icon-alert-circle-exc",
+            message:
+              template.name +
+              " is in use. First remove the devices linked to the template!",
+          });
+
+          return;
+        }
 
         if (res.data.status == "success") {
           this.$notify({

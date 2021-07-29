@@ -15,7 +15,7 @@
         <sidebar-item
           :link="{
             name: 'Dashboard',
-            icon: 'tim-icons icon-chart-pie-36',
+            icon: 'tim-icons icon-laptop',
             path: '/dashboard',
           }"
         >
@@ -24,7 +24,7 @@
         <sidebar-item
           :link="{
             name: 'Devices',
-            icon: 'tim-icons icon-chart-pie-36',
+            icon: 'tim-icons icon-light-3',
             path: '/devices',
           }"
         >
@@ -33,7 +33,7 @@
         <sidebar-item
           :link="{
             name: 'Alarms',
-            icon: 'tim-icons icon-chart-pie-36',
+            icon: 'tim-icons icon-bell-55',
             path: '/alarms',
           }"
         >
@@ -42,7 +42,7 @@
         <sidebar-item
           :link="{
             name: 'Templates',
-            icon: 'tim-icons icon-chart-pie-36',
+            icon: 'tim-icons icon-atom',
             path: '/templates',
           }"
         >
@@ -163,13 +163,14 @@ export default {
         if (credentials.data.status == "success") {
           this.options.username = credentials.data.username;
           this.options.password = credentials.data.password;
-        }else{ // Falta implementar sino sale bien el optener la credenciales con el else clase 182 minuto 8
-        console.log("No getMqttCredentials")
-
         }
-        
       } catch (error) {
         console.log(error);
+        if (error.response.status == 401) {
+          console.log("NO VALID TOKEN");
+          localStorage.clear();
+          window.location.href = "/login";
+        }
       }
     },
 
@@ -219,7 +220,7 @@ export default {
         console.log(this.client);
         console.log("Connection succeeded!");
         //SDATA SUBSCRIBE
-         this.client.subscribe(deviceSubscribeTopic, { qos: 0 }, (err) => {
+        this.client.subscribe(deviceSubscribeTopic, { qos: 0 }, (err) => {
           if (err) {
             console.log("Error in DeviceSubscription");
             return;

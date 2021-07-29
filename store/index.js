@@ -3,7 +3,6 @@ export const state = () => ({
   devices: [],
   selectedDevice: {},
   notifications: []
-
 });
 //como los valores de los estados no se pueden cambiar llamandolos directamente,
 //se debe hacer atravez de una mutacion como se indica abajo, el nombre del metodo (setAuth)
@@ -25,7 +24,7 @@ export const mutations = {
   },
 
   setSelectedDevice(state, device) {
-    state.selectedDevice = device
+    state.selectedDevice = device;
   }
 };
 
@@ -58,44 +57,53 @@ export const actions = {
     const axiosHeader = {
       headers: {
         //traemos el token que se almacena en el dd luego de hacer un login
-        token: this.state.auth.token 
+        token: this.state.auth.token
       }
     };
     //hacemos el request de axios, llamamos el metodo get le paso la url("/device")(que esta en api/
     //routes/devices.js) y le pasamos el token(axiosHeader), en otras palabras le pedimos los dispositivos
     // y le pasamos el token, luego usamos un callback(.then) que es la funcion con la respuesta
-    this.$axios.get("/device", axiosHeader).then(res => {
-      console.log(res.data.data);
-      res.data.data.forEach((device, index) => {
-        if (device.selected){
-          this.commit("setSelectedDevice", device)
-          $nuxt.$emit("selectedDeviceIndex", index)
+    this.$axios
+      .get("/device", axiosHeader)
+      .then(res => {
+        console.log(res.data.data);
+        res.data.data.forEach((device, index) => {
+          if (device.selected) {
+            this.commit("setSelectedDevice", device);
+            $nuxt.$emit("selectedDeviceIndex", index);
+          }
+        });
+
+        this.commit("setDevices", res.data.data); //llamo a la mutacion setDevices y le paso la lista de
+        //dispositivos que acaba de llegarme
+        //if all devices were removed
+        if (res.data.data.length == 0) {
+          this.commit("setSelectedDevice", {});
+          $nuxt.$emit("selectedDeviceIndex", null);
         }
+
+        this.commit("setDevices", res.data.data);
       })
-
-
-      this.commit("setDevices", res.data.data) //llamo a la mutacion setDevices y le paso la lista de 
-      //dispositivos que acaba de llegarme
-    }).catch(error => {
-      console.log(error);
-    });
-
+      .catch(error => {
+        console.log(error);
+      });
   },
 
   getNotifications() {
-
     const axiosHeader = {
       headers: {
         token: this.state.auth.token
       }
     };
 
-    this.$axios.get("/notifications", axiosHeader)
-    .then(res => {
-      console.log(res.data.data);
-      this.commit("setNotifications", res.data.data)
-    }).catch(error => {
-      console.log(error);
-    });
-  },
+    this.$axios
+      .get("/notifications", axiosHeader)
+      .then(res => {
+        console.log(res.data.data);
+        this.commit("setNotifications", res.data.data);
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  }
 };

@@ -14,55 +14,59 @@ import EmqxAuthRule from "../models/emqx_auth.js";
 //GET -> req.query
 //******************
 //**** A P I *******
-//****************** 
+//******************
 
 //LOGIN
 router.post("/login", async (req, res) => {
-  // en un login resibimos el email y password
-  const email = req.body.email;
-  const password = req.body.password;
-  //Primero buscamos en la base el email para saber si esta registrado
-  // entonces a user lo cargamos con la busqueda en la base findOne de solo un email que coniside
-  // con el campo email del email recibido en req.body.email. con await espera hata  tener respuesta
-  // de la base.
-  var user = await User.findOne({ email: email });
+  try {
+    // en un login resibimos el email y password
+    const email = req.body.email;
+    const password = req.body.password;
+    //Primero buscamos en la base el email para saber si esta registrado
+    // entonces a user lo cargamos con la busqueda en la base findOne de solo un email que coniside
+    // con el campo email del email recibido en req.body.email. con await espera hata  tener respuesta
+    // de la base.
+    var user = await User.findOne({ email: email });
 
-  //if no email
-  if (!user) {
-    const toSend = {
-      status: "error",
-      error: "Invalid Credentials"
-    };
-    //si no existe el usuario sale y no continua verificando el proceso
-    //el codigo 401 se usa para indicar credenciales erroneas
-    return res.status(401).json(toSend);
-  }
+    //if no email
+    if (!user) {
+      const response = {
+        status: "error",
+        error: "Invalid Credentials"
+      };
+      //si no existe el usuario sale y no continua verificando el proceso
+      //el codigo 401 se usa para indicar credenciales erroneas
+      return res.status(401).json(response);
+    }
 
-  //if email and password ok
-  if (bcrypt.compareSync(password, user.password)) {
-    //con la siguiente instruccion eliminamos el password de la variable user
-    // para no entregarla en el token siguiente.
-    user.set("password", undefined, { strict: false });
-    //userData resibe a user(sin password) y se encripta con jwt, "securePasswordHere" es la firma de
-    // encriptado para que nuestro sistema determine que ese token fue generado por nosotros y la
-    // expiracion esta dada en segundos asi = 60sg * 60min * 24h * 30dias
-    const token = jwt.sign({ userData: user }, "securePasswordHere", {
-      expiresIn: 60 * 60 * 24 * 30
-    });
+    //if email and password ok
+    if (bcrypt.compareSync(password, user.password)) {
+      //con la siguiente instruccion eliminamos el password de la variable user
+      // para no entregarla en el token siguiente.
+      user.set("password", undefined, { strict: false });
+      //userData resibe a user(sin password) y se encripta con jwt, "securePasswordHere" es la firma de
+      // encriptado para que nuestro sistema determine que ese token fue generado por nosotros y la
+      // expiracion esta dada en segundos asi = 60sg * 60min * 24h * 30dias
+      const token = jwt.sign({ userData: user }, "securePasswordHere", {
+        expiresIn: 60 * 60 * 24 * 30
+      });
 
-    const toSend = {
-      status: "success",
-      token: token,
-      userData: user
-    };
+      const response = {
+        status: "success",
+        token: token,
+        userData: user
+      };
 
-    return res.json(toSend);
-  } else {
-    const toSend = {
-      status: "error",
-      error: "Invalid Credentials"
-    };
-    return res.status(401).json(toSend);
+      return res.json(response);
+    } else {
+      const response = {
+        status: "error",
+        error: "Invalid Credentials"
+      };
+      return res.status(401).json(response);
+    }
+  } catch (error) {
+    console.log(error);
   }
 });
 
@@ -82,90 +86,89 @@ router.post("/register", async (req, res) => {
 
     var user = await User.create(newUser);
 
-    console.log(user);
-
-    const toSend = {
+    const response = {
       status: "success"
     };
 
-    res.status(200).json(toSend);
+    res.status(200).json(response);
   } catch (error) {
     console.log("ERROR - REGISTER ENDPOINT");
     console.log(error);
 
-    const toSend = {
+    const response = {
       status: "error",
       error: error
     };
 
-    console.log(toSend);
+    console.log(response);
 
-    return res.status(500).json(toSend);
+    return res.status(500).json(response);
   }
 });
 
 //GET MQTT WEB CREDENTIALS
 router.post("/getmqttcredentials", checkAuth, async (req, res) => {
-  
   try {
     const userId = req.userData._id;
 
     const credentials = await getWebUserMqttCredentials(userId);
 
-    const toSend = {
+    const response = {
       status: "success",
       username: credentials.username,
       password: credentials.password
     };
 
-    res.json(toSend);
+    res.json(response);
 
     setTimeout(() => {
       getWebUserMqttCredentials(userId);
     }, 5000);
 
     return;
-
   } catch (error) {
     console.log(error);
 
-    const toSend = {
+    const response = {
       status: "error"
     };
 
-    return res.status(500).json(toSend);
+    return res.status(500).json(response);
   }
 });
 
 //GET MQTT CREDENTIALS FOR RECONNECTION
-router.post("/getmqttcredentialsforreconnection", checkAuth, async (req, res) => {
+router.post(
+  "/getmqttcredentialsforreconnection",
+  checkAuth,
+  async (req, res) => {
+    try {
+      const userId = req.userData._id;
+      const credentials = await getWebUserMqttCredentialsForReconnection(
+        userId
+      );
 
-  const userId = req.userData._id;
-  const credentials = await getWebUserMqttCredentialsForReconnection(userId);
+      const response = {
+        status: "success",
+        username: credentials.username,
+        password: credentials.password
+      };
 
-  const toSend = {
-    status: "success",
-    username: credentials.username,
-    password: credentials.password
+      console.log(response);
+      res.json(response);
+
+      setTimeout(() => {
+        getWebUserMqttCredentials(userId);
+      }, 15000);
+    } catch (error) {
+      console.log(error);
+    }
   }
-
-  console.log(toSend);
-  res.json(toSend);
-
-  setTimeout(() => {
-    getWebUserMqttCredentials(userId);
-  }, 15000);
-
-
-});
-
-
-
+);
 
 //**********************
 //**** FUNCTIONS *******
-//********************** 
-
+//**********************
 
 // mqtt credential types: "user", "device", "superuser"
 async function getWebUserMqttCredentials(userId) {
@@ -225,28 +228,22 @@ async function getWebUserMqttCredentials(userId) {
   }
 }
 
+async function getWebUserMqttCredentialsForReconnection(userId) {
+  try {
+    const rule = await EmqxAuthRule.find({ type: "user", userId: userId });
 
-async function getWebUserMqttCredentialsForReconnection(userId){
-
-  try{
-    const rule = await EmqxAuthRule.find({type: "user", userId: userId});
-
-    if (rule.length == 1){
+    if (rule.length == 1) {
       const toReturn = {
         username: rule[0].username,
         password: rule[0].password
-      }
+      };
       return toReturn;
     }
-
-  }
-  catch(error){
+  } catch (error) {
     console.log(error);
     return false;
   }
-
 }
-
 
 function makeid(length) {
   var result = "";

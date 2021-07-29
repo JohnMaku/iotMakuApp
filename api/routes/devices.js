@@ -15,15 +15,11 @@ import Device from "../models/device.js";
 import SaverRule from "../models/emqx_saver_rule.js";
 import Template from "../models/template.js";
 import AlarmRule from "../models/emqx_alarm_rule.js";
+import EmqxAuthRule from "../models/emqx_auth.js";
 
-/* 
-  ___  ______ _____ 
- / _ \ | ___ \_   _|
-/ /_\ \| |_/ / | |   
-|  _  ||  __/  | |  
-| | | || |    _| |_ 
-\_| |_/\_|    \___/ 
-*/
+//******************
+//**** A P I *******
+//******************
 
 const auth = {
   auth: {
@@ -50,6 +46,8 @@ router.get("/device", checkAuth, async (req, res) => {
      * donde pasamos el objeto original(oldObj) y nos retorna el nuevo desacoplado(newObj)
      */
     var devices = await Device.find({ userId: userId });
+
+    //mongoose array to js array
     devices = JSON.parse(JSON.stringify(devices));
 
     //get saver rules
@@ -80,23 +78,22 @@ router.get("/device", checkAuth, async (req, res) => {
       );
     });
 
-    const toSend = {
+    const response = {
       status: "success",
       data: devices
     };
 
-    res.json(toSend);
+    res.json(response);
   } catch (error) {
     console.log("ERROR GETTING DEVICES");
     console.log(error);
 
-    const toSend = {
+    const response = {
       status: "error",
       error: error
     };
 
-    
-    return res.status(500).json(toSend);
+    return res.status(500).json(response);
   }
 });
 
@@ -126,6 +123,8 @@ router.post("/device", checkAuth, async (req, res) => {
     newDevice.userId = userId;
     newDevice.createdTime = Date.now();
 
+    newDevice.password = makeid(10);
+
     //Con el siguiente await garatizo que todo espera hasta que tengamos una respuesta de si se creo
     //o no la regla de salvado, explicado clase 156
     await createSaverRule(userId, newDevice.dId, true); //el true es para activar la saver rule
@@ -140,20 +139,20 @@ router.post("/device", checkAuth, async (req, res) => {
     await selectDevice(userId, newDevice.dId);
 
     //Preparamos la repuesta para el cliente, que se creo bien.
-    const toSend = {
+    const response = {
       status: "success"
     };
     //enviamos la respuesta
-    return res.json(toSend);
+    return res.json(response);
   } catch (error) {
     console.log("ERROR CREATING NEW DEVICE");
     console.log(error);
 
-    const toSend = {
+    const response = {
       status: "error",
       error: error
     };
-    return res.status(500).json(toSend);
+    return res.status(500).json(response);
   }
 });
 
@@ -163,84 +162,114 @@ router.delete("/device", checkAuth, async (req, res) => {
     const userId = req.userData._id;
     const dId = req.query.dId;
 
+    //deleting saver rule.
     await deleteSaverRule(dId);
-    const result = await Device.deleteOne({ userId: userId, dId: dId });
+    //deleting all posible alarm rules
+    await deleteAllAlarmRules(userId, dId);
 
-    const toSend = {
+    //deleting all posible mqtt device credentials
+    await deleteMqttDeviceCredentials(dId);
+
+    //deleting device
+    const result = await Device.deleteOne({ userId: userId, dId: dId });
+    //devices after deletion
+    const devices = await Device.find({ userId: userId });
+
+    if (devices.length >= 1) {
+      //any selected?
+      var found = false;
+      devices.forEach(devices => {
+        if (devices.selected == true) {
+          found = true;
+        }
+      });
+
+      //if no selected...
+      //we need to selet the first
+      if (!found) {
+        await Device.updateMany({ userId: userId }, { selected: false });
+        await Device.updateOne(
+          { userId: userId, dId: devices[0].dId },
+          { selected: true }
+        );
+      }
+    }
+
+    const response = {
       status: "success",
       data: result
     };
 
-    return res.json(toSend);
+    return res.json(response);
   } catch (error) {
     console.log("ERROR DELETING DEVICE");
     console.log(error);
 
-    const toSend = {
+    const response = {
       status: "error",
       error: error
     };
 
-    return res.status(500).json(toSend);
+    return res.status(500).json(response);
   }
 });
 
 //UPDATE DEVICE (SELECTOR)
 //con put actualizamos un dispositivo
 router.put("/device", checkAuth, async (req, res) => {
-  const dId = req.body.dId;
-  const userId = req.userData._id;
+  try {
+    const dId = req.body.dId;
+    const userId = req.userData._id;
 
-  if (await selectDevice(userId, dId)) {
-    const toSend = {
-      status: "success"
-    };
+    if (await selectDevice(userId, dId)) {
+      const response = {
+        status: "success"
+      };
 
-    return res.json(toSend);
-  } else {
-    const toSend = {
-      status: "error"
-    };
+      return res.json(response);
+    } else {
+      const response = {
+        status: "error"
+      };
 
-    return res.json(toSend);
+      return res.json(response);
+    }
+  } catch (error) {
+    console.log(error);
   }
 });
 
 //SAVER-RULE STATUS UPDATER
 router.put("/saver-rule", checkAuth, async (req, res) => {
-  const rule = req.body.rule;
+  try {
+    const rule = req.body.rule;
 
-  console.log(rule);
+    console.log(rule);
 
-  await updateSaverRuleStatus(rule.emqxRuleId, rule.status);
+    await updateSaverRuleStatus(rule.emqxRuleId, rule.status);
 
-  const toSend = {
-    status: "success"
-  };
+    const response = {
+      status: "success"
+    };
 
-  res.json(toSend);
+    res.json(response);
+  } catch (error) {
+    console.log(error);
+  }
 });
 
-/* 
-______ _   _ _   _ _____ _____ _____ _____ _   _  _____ 
-|  ___| | | | \ | /  __ \_   _|_   _|  _  | \ | |/  ___|
-| |_  | | | |  \| | /  \/ | |   | | | | | |  \| |\ `--. 
-|  _| | | | | . ` | |     | |   | | | | | | . ` | `--. \
-| |   | |_| | |\  | \__/\ | |  _| |_\ \_/ / |\  |/\__/ /
-\_|    \___/\_| \_/\____/ \_/  \___/ \___/\_| \_/\____/  
-*/
+//**********************
+//**** FUNCTIONS *******
+//**********************
 
 async function getAlarmRules(userId) {
-
   try {
-      const rules = await AlarmRule.find({ userId: userId });
-      return rules;
+    const rules = await AlarmRule.find({ userId: userId });
+    return rules;
   } catch (error) {
-      return "error";
+    return "error";
   }
-
 }
-
 
 async function selectDevice(userId, dId) {
   try {
@@ -290,10 +319,6 @@ async function getSaverRules(userId) {
 
 //create saver rule
 async function createSaverRule(userId, dId, status) {
-  console.log(userId);
-  console.log(dId);
-  console.log(status);
-
   try {
     const url = "http://localhost:8085/api/v4/rules";
 
@@ -323,7 +348,6 @@ async function createSaverRule(userId, dId, status) {
 
     //save rule in emqx - grabamos la regla en emqx
     const res = await axios.post(url, newRule, auth);
-    console.log(res.data.data);
 
     if (res.status === 200 && res.data.data) {
       await SaverRule.create({
@@ -379,13 +403,59 @@ async function deleteSaverRule(dId) {
     return false;
   }
 }
+//delete ALL alarm Rules...
+async function deleteAllAlarmRules(userId, dId) {
+  try {
+    const rules = await AlarmRule.find({ userId: userId, dId: dId });
 
-module.exports = router; //se exporta el ruteador para que lo tenga en cuenta el index
+    if (rules.length > 0) {
+      asyncForEach(rules, async rule => {
+        const url = "http://localhost:8085/api/v4/rules/" + rule.emqxRuleId;
+        const res = await axios.delete(url, auth);
+      });
 
-/*
-userId/dId/temperature -> 
-{
-  value: 21,
-  save: 1
+      await AlarmRule.deleteMany({ userId: userId, dId: dId });
+    }
+
+    return true;
+  } catch (error) {
+    console.log(error);
+    return "error";
+  }
 }
-*/
+
+// We can solve this by creating our own asyncForEach() method:
+// thanks to Sebastien Chopin - Nuxt Creator :)
+// https://codeburst.io/javascript-async-await-with-foreach-b6ba62bbf404
+async function asyncForEach(array, callback) {
+  for (let index = 0; index < array.length; index++) {
+    await callback(array[index], index, array);
+  }
+}
+
+//delete ALL emqx device  auth rules
+async function deleteMqttDeviceCredentials(dId) {
+  try {
+    await EmqxAuthRule.deleteMany({ dId: dId, type: "device" });
+
+    return true;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+}
+function makeid(length) {
+  try {
+    var result = "";
+    var characters =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    var charactersLength = characters.length;
+    for (var i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+  } catch (error) {
+    console.log(error);
+  }
+}
+module.exports = router; //se exporta el ruteador para que lo tenga en cuenta el index
